@@ -1,0 +1,160 @@
+﻿const metodoSolicitudVehicular = {
+    route: 'solicitudvehicular'
+}
+var serviceSolicitudVehicular = {
+
+    async insSolicitudVehicular(request, headersprivilegios) {
+        loading(true);
+        var requestOptions = {
+            method: 'POST',
+            headers: headersprivilegios,
+            redirect: 'follow',
+            body: JSON.stringify(request)
+        };
+        var datos = await fetch(`${API_URL}${metodoSolicitudVehicular.route}`, requestOptions)
+            .then(res => res.json())
+            .then(res => res)
+            .catch(err => err);
+
+        if (datos.messages !== undefined) {
+            loading(false);
+            return Promise.reject(datos);
+        } else {
+            loading(false);
+            return Promise.resolve({ codigoGenerado: datos });
+        }
+    },
+    async getSolicitudxId(request, headersprivilegios) {
+        loading(true);
+        var requestOptions = {
+            method: 'GET',
+            headers: headersprivilegios,
+            redirect: 'follow'
+        };
+
+        var datos = await fetch(`${API_URL}${metodoSolicitudVehicular.route}/obtener?${formatParameter(request)}`, requestOptions)
+            .then(res => res.json())
+            .then(res => res)
+            .catch(err => err);
+
+        if (datos.messages !== undefined) {
+            loading(false);
+            return Promise.reject(datos);
+        } else {
+            loading(false);
+            return Promise.resolve(datos);
+        }
+    },
+    async getDocumentosNotaResolucion(request, headersprivilegios) {
+        loading(true);
+        var requestOptions = {
+            method: 'GET',
+            headers: headersprivilegios,
+            redirect: 'follow'
+        };
+
+        var datos = await fetch(`${API_URL}${metodoSolicitudVehicular.route}/obtenerdocumentos?${formatParameter(request)}`, requestOptions)
+            .then(res => res.json())
+            .then(res => res)
+            .catch(err => err);
+
+        if (datos.messages !== undefined) {
+            loading(false);
+            return Promise.reject(datos);
+        } else {
+            loading(false);
+            return Promise.resolve(datos);
+        }
+    },
+    async bajaSolicitudCarnet(request, headersprivilegios) {
+        loading(true);
+        var requestOptions = {
+            method: 'PUT',
+            headers: headersprivilegios,
+            redirect: 'follow',
+            body: JSON.stringify(request)
+        };
+
+        var datos = await fetch(`${API_URL}${metodoSolicitudVehicular.route}/baja`, requestOptions)
+            .then(res => res.json())
+            .then(res => res)
+            .catch(err => err);
+
+        if (datos.messages !== undefined) {
+            loading(false);
+            return Promise.reject(datos);
+        } else {
+            loading(false);
+            return Promise.resolve(datos);
+        }
+    },
+    async ConformidadSolicitudCarnet(request, headersprivilegios) {
+        loading(true);
+        var requestOptions = {
+            method: 'PUT',
+            headers: headersprivilegios,
+            redirect: 'follow',
+            body: JSON.stringify(request)
+        };
+
+        var datos = await fetch(`${API_URL}${metodoSolicitudVehicular.route}/conformidad`, requestOptions)
+            .then(res => res.json())
+            .then(res => res)
+            .catch(err => err);
+
+        if (datos.messages !== undefined) {
+            loading(false);
+            return Promise.reject(datos);
+        } else {
+            loading(false);
+            return Promise.resolve(datos);
+        }
+    },
+    async viewSolicitudPdf(request, headersprivilegios) {
+        var requestOptions = {
+            method: 'GET',
+            headers: headersprivilegios,
+            redirect: 'follow'
+        };
+        loading(true);
+        var datos = await fetch(`${API_URL}${metodoSolicitudVehicular.route}/obtenerpdf?${formatParameter(request)}`, requestOptions)
+            .then(res => res.blob())
+            .then(res => res)
+            .catch(err => err);
+
+        //console.log(datos);
+
+        if (datos.messages !== undefined) {
+            loading(false);
+            return Promise.reject(datos);
+        } else {
+            loading(false);
+            return Promise.resolve(datos);
+        }
+    },
+    async actualizarSolicitudCarnet(request, headersprivilegios) {
+        loading(true);
+        var requestOptions = {
+            method: 'PUT',
+            headers: headersprivilegios,
+            redirect: 'follow',
+            body: JSON.stringify(request)
+        };
+
+        var datos = await fetch(`${API_URL}${metodoSolicitudVehicular.route}/baja`, requestOptions)
+            .then(res => res.json())
+            .then(res => res)
+            .catch(err => err);
+
+        if (datos.messages !== undefined) {
+            loading(false);
+            return Promise.reject(datos);
+        } else {
+            loading(false);
+            return Promise.resolve(datos);
+        }
+    },
+}
+
+ 
+

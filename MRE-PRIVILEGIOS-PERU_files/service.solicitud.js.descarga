@@ -1,0 +1,49 @@
+﻿const metodoSolicitud = {
+    route: 'solicitud'
+}
+var serviceSolicitud = {
+    async getsolicitudPaginado(request, headersprivilegios) {
+        var requestOptions = {
+            method: 'GET',
+            headers: headersprivilegios,
+            redirect: 'follow',
+        };
+        loading(true);
+        var datos = await fetch(`${API_URL}${metodoSolicitud.route}/obtenersolicitudespaginado?${formatParameter(request)}`, requestOptions)
+            .then(res => res.json())
+            .then(res => res)
+            .catch(err => err);
+
+        if (datos.messages !== undefined) {
+            loading(false);
+            return Promise.reject(datos);
+        } else {
+            loading(false);
+            return Promise.resolve(datos);
+        }
+    },
+    async delSolicitud(request, headersprivilegios) {
+        var requestOptions = {
+            method: 'PUT',
+            headers: headersprivilegios,
+            redirect: 'follow',
+            body: JSON.stringify(request),
+        };
+        loading(true);
+        var datos = await fetch(`${API_URL}${metodoSolicitud.route}/eliminar`, requestOptions)
+            .then(res => res.json())
+            .then(res => res)
+            .catch(err => err);
+
+        if (datos.messages !== undefined) {
+            loading(false);
+            return Promise.reject(datos);
+        } else {
+            loading(false);
+            return Promise.resolve(datos);
+        }
+    }
+}
+
+
+

@@ -1,0 +1,58 @@
+﻿const K_GLOBAL_LS = {
+    _VAR_TKN: 'token_ext',
+    _VAR_USRROL: 'userRol_ext',
+    _VAR_USRLOGED: 'userLoged_ext',
+    _VAR_PROFILES: 'profileLoged_ext',
+    _VAR_TKN_REFRESH: 'refreshToken_ext',
+}
+const passport = {
+    getJwtToken() {
+        var tkn = localStorage.getItem(CryptoJS.MD5(K_GLOBAL_LS._VAR_TKN));
+        if (tkn == "undefined") return '';
+        else return localStorage.getItem(CryptoJS.MD5(K_GLOBAL_LS._VAR_TKN));
+    },
+    getIdUserRol() {
+        return localStorage.getItem(CryptoJS.MD5(K_GLOBAL_LS._VAR_USRROL));
+    },
+    getInformationUser() {
+        return JSON.parse(localStorage.getItem(CryptoJS.MD5(K_GLOBAL_LS._VAR_USRLOGED)));
+    },
+    getInformationProfile() {
+        var profile = localStorage.getItem(CryptoJS.MD5(K_GLOBAL_LS._VAR_PROFILES));
+        if (profile == "undefined") return null;
+        else return JSON.parse(localStorage.getItem(CryptoJS.MD5(K_GLOBAL_LS._VAR_PROFILES)));
+    }
+    ,
+    getRefreshToken() {
+        return localStorage.getItem(CryptoJS.MD5(K_GLOBAL_LS._VAR_TKN_REFRESH));
+    }
+    ,
+    setJwtToken(token) {
+        localStorage.setItem(CryptoJS.MD5(K_GLOBAL_LS._VAR_TKN), token);
+    },
+    setJwtIdUserRol(objeto) {
+        localStorage.setItem(CryptoJS.MD5(K_GLOBAL_LS._VAR_USRROL), objeto);
+    },
+    setJwtInformationUser(objeto) {
+        localStorage.setItem(CryptoJS.MD5(K_GLOBAL_LS._VAR_USRLOGED), JSON.stringify(objeto));
+    },
+    setJwtInformationProfile(objeto) {
+        localStorage.setItem(CryptoJS.MD5(K_GLOBAL_LS._VAR_PROFILES), JSON.stringify(objeto));
+    },
+    saveRefreshToken(refreshToken) {
+        localStorage.setItem(CryptoJS.MD5(K_GLOBAL_LS._VAR_TKN_REFRESH), refreshToken);
+    },
+    removeJwtToken() {
+        localStorage.removeItem(CryptoJS.MD5(K_GLOBAL_LS._VAR_TKN));
+        localStorage.removeItem(CryptoJS.MD5(K_GLOBAL_LS._VAR_USRROL));
+        localStorage.removeItem(CryptoJS.MD5(K_GLOBAL_LS._VAR_USRLOGED));
+        localStorage.removeItem(CryptoJS.MD5(K_GLOBAL_LS._VAR_PROFILES));
+        localStorage.removeItem(CryptoJS.MD5(K_GLOBAL_LS._VAR_TKN_REFRESH));
+
+ 
+
+    },
+
+
+   
+}

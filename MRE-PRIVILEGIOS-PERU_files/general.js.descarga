@@ -1,0 +1,812 @@
+﻿$(function () {
+
+    //const _profile = passport.getInformationProfile();
+    const _user = passport.getInformationUser();
+    if (_user != null) {
+        settingMenu(_user.codigoRol)
+    } 
+    let str = "";
+    let usuarioLog = "-";
+    let correoLog = "-";
+    let rolLog = "-";
+
+   /* if (_profile != null) {
+        _profile.forEach((rol) => {
+            str += ` <a class="dropdown-item" onclick="resetProfile('${rol.descripcionRol}','${rol.idUsuarioRol}', '${rol.codigoRol}')" style="text-transform:uppercase"   >${rol.descripcionRol}</a>`;
+        });
+    }
+    document.querySelector("#ddlRolesSession").innerHTML = str;
+    */
+    if (_user != null) {
+        usuarioLog = _user.usuario;
+        correoLog = _user.correo;
+        rolLog = _user.rol;
+    }
+    $("#pnombrerol").text(rolLog);
+    $("#pnombreusuario").text(usuarioLog);
+    $("#usuarioLog").text("Usuario: " + usuarioLog);
+    $("#correoLog").text("Correo: " + correoLog);
+    $("#rolLog").text("Rol: " + rolLog);
+
+});
+
+const tituloAlert = {
+    seguridad: 'Aviso privilegios',
+    confirmacion: 'privilegios :: Confirmación de sistema',
+    notificacion: 'privilegios ::'
+}
+const perfil = {
+    administrador: 1,
+    funcionario: 2,
+    revisor: 3,
+    embajadas: 4,
+}
+function formatParameter(data) {
+    let urlParameters = Object.entries(data).map(e => e.join('=')).join('&');
+
+    return urlParameters;
+}
+function handleErrors(response) {
+    if (!response.ok) {
+        throw Error(response.statusText);
+    }
+    return response;
+}
+
+/*OBTENER DEL LOCAL STORAGE*/
+const headersprivilegios = new Headers();
+//passport.getJwtToken()
+headersprivilegios.append("Authorization", "Bearer " + passport.getJwtToken());
+headersprivilegios.append("Content-type", "application/json; charset=UTF-8");
+headersprivilegios.append("x-token-not-sent", false);
+headersprivilegios.append("x-token-expired", false);
+headersprivilegios.append("X-Auditoria", passport.getIdUserRol());
+
+const headersprivilegiosLogin = new Headers();
+headersprivilegiosLogin.append("Content-type", "application/json; charset=UTF-8");
+headersprivilegios.append("x-token-not-sent", false);
+headersprivilegios.append("x-token-expired", false);
+
+
+const alertify = {
+    success(title, text,callback) {
+
+        Swal.fire({
+            title: title,
+            text: text,
+            icon: 'success',
+            confirmButtonColor: '#343a40',
+            confirmButtonText: 'Aceptar'
+            // footer: '<a href="">Why do I have this issue?</a>'
+        })
+        callback(true);
+     
+    },
+    error(title, text, callback) {
+
+
+        Swal.fire({
+            title: title,
+            text: text,
+            icon: 'error',
+            confirmButtonColor: '#343a40',
+            confirmButtonText: 'Aceptar'
+           // footer: '<a href="">Why do I have this issue?</a>'
+        })
+
+
+        
+
+        callback(true);
+    },
+    warning(title, text, callback) {
+
+
+        Swal.fire({
+            title: title,
+            text: text,
+            icon: 'warning',
+            confirmButtonColor: '#343a40',
+            confirmButtonText: 'Aceptar'
+            // footer: '<a href="">Why do I have this issue?</a>'
+        })
+        
+         callback(true);
+    },
+    info(title, text, callback) {
+        Swal.fire({
+            title: title,
+            text: text,
+            icon: 'info',
+            confirmButtonColor: '#343a40',
+            confirmButtonText: 'Aceptar'
+            // footer: '<a href="">Why do I have this issue?</a>'
+        })
+         
+        callback(true);
+    },
+    confirm(title, text,icon,callback) {
+        Swal.fire({
+            title: title,
+            text: text,
+            icon: icon,
+            showCancelButton: true,
+            confirmButtonColor: '#343a40',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Aceptar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                 
+                callback(result);
+            } else if (result.isDenied) {
+               
+                callback(result);
+            }
+        })
+        
+    }
+}
+function loading(result) {
+    if (result === true) {
+        $("#loading").css('display', 'none');
+    } else {
+        $("#loading").css('display', 'none');
+        //setTimeout(function () {            $("#loading").css('display', 'none');        }, 2000);
+
+    }
+
+}
+
+function msgException(fncOrigen,error) {
+    let message = error.messages[0];
+    let messageValidate = "El usuario no ha generado token de acceso.";
+    let messageValidateExpired = "El token del usuario a expirado";
+    let messageValidateBearer = "Bearer";
+    let messageValidateRolAccess = "EL ROL DE LA SESION INICIADA NO TIENE PRIVILEGIOS PARA ACCEDER AL SERVICIO";
+    let messageValidateUserAccess = "NO TIENE PERMISOS PARA ACCEDER AL SERVICIO";
+    loading(false);
+
+    if (message.indexOf(messageValidate) >= 0 ||
+        message.indexOf(messageValidateExpired) >= 0 ||
+        message.indexOf(messageValidateBearer) >= 0 ||
+        message.indexOf(messageValidateRolAccess) >= 0 ||
+        message.indexOf(messageValidateUserAccess) >= 0) {
+
+        if (message.indexOf(messageValidateRolAccess) >= 0 || message.indexOf(messageValidateUserAccess) >= 0) {
+            alertify.warning(tituloAlert.seguridad, `${message}`, () => {
+                setTimeout(function () {
+                    document.location.href = `${basePath.privilegiosWeb}login`;
+                }, 3000);
+            });
+        } else {
+            passport.removeJwtToken();
+            alertify.warning(tituloAlert.seguridad, `Error : ${message}`, () => {
+                setTimeout(function () {
+                    document.location.href = `${basePath.privilegiosWeb}login`;
+                }, 3000);
+            });
+
+        }
+    } else {
+        alertify.error(tituloAlert.seguridad, `${message}`, () => { });
+    }
+
+}
+
+function validarLogin(callback) {
+    let request = {
+        token: encodeURIComponent(passport.getJwtToken())
+    }
+    servicePassport.validarSession(request, headersprivilegios)
+        .then(response => {
+            callback(response);
+
+        })
+        .catch(error => {
+            callback(false);
+            msgException('validarLogin', error);
+        });
+
+} 
+
+
+function soloNumeros(event) {
+    var charCode = (event.which) ? event.which : event.keyCode;
+    console.log(charCode);
+    if (charCode != 46 && charCode > 31  &&
+        (charCode < 48 || charCode > 57 || charCode > 101))  
+        return false;
+
+    return true;
+}
+
+
+
+function loggout() {
+    var datos = { }
+    servicePassport.logoutLog(datos, headersprivilegios)
+        .then(response => {
+            if (response.result > 0) {
+                passport.removeJwtToken();
+                document.location.href = `${basePath.privilegiosWeb}login`;
+            } else {
+                alertify.error(tituloAlert.seguridad, response.message, () => { });
+            }
+        })
+        .catch(error => {
+            msgException('logoutLog', error);
+        });
+
+   
+}
+function resetProfile(descripcionRol, idUsuarioRol, codigoRol) {
+
+    var __user = passport.getInformationUser();
+    __user.rol = descripcionRol;
+    __user.idUsuarioRol = idUsuarioRol;
+    __user.codigoRol = parseInt(codigoRol);
+
+    passport.setJwtIdUserRol(idUsuarioRol);
+    passport.setJwtInformationUser(__user);
+
+    settingMenu(codigoRol)
+    document.location.href = `${basePath.privilegiosWeb}Index`;
+}
+
+function settingMenu(codigoRol) {
+    switch (parseInt(codigoRol)) {
+        
+        case perfil.embajadas: {
+            const boxes = document.querySelectorAll('.container-menu');
+            boxes.forEach(box => {
+                box.classList.remove('hidden');
+            });
+
+           
+            break;
+        }
+        default:
+
+
+            break;
+
+    }
+}
+function fillSelectTipoDocumento(control, valor, mensaje, callback) {
+
+    var val = valor == undefined ? 0 : valor;
+    $("#" + control + " option").remove();
+    $("#" + control).append("<option value='0'>" + mensaje + "</option>");
+
+    serviceCatalogoItem.getTipoDocumentoIdentidad(headersprivilegios)
+        .then(response => {
+            console.log(response);
+            $.each(response, function (index, tp) {
+                var selected = "";
+                if (val == tp.idCatalogoItem) selected = "Selected";
+                $("#" + control).append("<option value='" + tp.idCatalogoItem + "' " + selected + ">" + tp.descripcionCatalogoItem + "</option>");
+            });
+
+        })
+        .catch(error => {
+            console.log(error);
+            alertify.error(tituloAlert.seguridad, `Error select: ${error.messages}`)
+        });
+    callback(1);
+}
+function fillSelectPaises(control, valor, mensaje, callback) {
+
+    var val = valor == undefined ? 0 : valor;
+    $("#" + control + " option").remove();
+    $("#" + control).append("<option value='0'>" + mensaje + "</option>");
+    //$("#" + control).selectpicker('refresh');
+    serviceCatalogoItem.getPaises(headersprivilegios)
+        .then(response => {
+            $.each(response, function (index, tp) {
+                var selected = "";
+                if (val == tp.idCatalogoItem) selected = "Selected";
+                $("#" + control).append("<option value='" + tp.idCatalogoItem + "' " + selected + ">" + tp.descripcionCatalogoItem + "</option>");
+            });
+            //$("#" + control).selectpicker('refresh');
+            //$("#" + control).selectpicker('val', valor);
+        })
+        .catch(error => {
+            alertify.error(tituloAlert.seguridad, `Error select: ${error.messages}`)
+        });
+    callback(1);
+}
+function fillSelectNacionalidad(control, valor, mensaje, callback) {
+
+    var val = valor == undefined ? 0 : valor;
+    $("#" + control + " option").remove();
+    $("#" + control).append("<option value='0'>" + mensaje + "</option>");
+    //$("#" + control).selectpicker('refresh');
+    serviceCatalogoItem.getPaises(headersprivilegios)
+        .then(response => {
+            $.each(response, function (index, tp) {
+                var selected = "";
+                if (val == tp.idCatalogoItem) selected = "Selected";
+                $("#" + control).append("<option value='" + tp.idCatalogoItem + "' " + selected + ">" + tp.abreviaturaCatalogoItem + "</option>");
+            });
+            //$("#" + control).selectpicker('refresh');
+            //$("#" + control).selectpicker('val', valor);
+        })
+        .catch(error => {
+            alertify.error(tituloAlert.seguridad, `Error select: ${error.messages}`)
+        });
+    callback(1);
+}
+function fillSelectEstadoCivil(control, valor, mensaje, callback) {
+
+    var val = valor == undefined ? 0 : valor;
+    $("#" + control + " option").remove();
+    $("#" + control).append("<option value='0'>" + mensaje + "</option>");
+    //$("#" + control).selectpicker('refresh');
+    serviceCatalogoItem.getEstadoCivil(headersprivilegios)
+        .then(response => {
+            $.each(response, function (index, tp) {
+                var selected = "";
+                if (val == tp.idCatalogoItem) selected = "Selected";
+                $("#" + control).append("<option value='" + tp.idCatalogoItem + "' " + selected + ">" + tp.descripcionCatalogoItem + "</option>");
+            });
+            //$("#" + control).selectpicker('refresh');
+            //$("#" + control).selectpicker('val', valor);
+        })
+        .catch(error => {
+            alertify.error(tituloAlert.seguridad, `Error select: ${error.messages}`)
+        });
+    callback(1);
+}
+function fillSelectCargos(control, valor, mensaje, callback) {
+
+    var val = valor == undefined ? 0 : valor;
+    $("#" + control + " option").remove();
+    $("#" + control).append("<option value='0'>" + mensaje + "</option>");
+    //$("#" + control).selectpicker('refresh');
+    serviceCatalogoItem.getCargos(headersprivilegios)
+        .then(response => {
+            $.each(response, function (index, tp) {
+                var selected = "";
+                if (val == tp.idCatalogoItem) selected = "Selected";
+                $("#" + control).append("<option value='" + tp.idCatalogoItem + "' " + selected + ">" + tp.descripcionCatalogoItem + "</option>");
+            });
+            //$("#" + control).selectpicker('refresh');
+            //$("#" + control).selectpicker('val', valor);
+        })
+        .catch(error => {
+            alertify.error(tituloAlert.seguridad, `Error select: ${error.messages}`)
+        });
+    callback(1);
+}
+function fillSelectCategoria(control, valor, mensaje, callback) {
+
+    var val = valor == undefined ? 0 : valor;
+    $("#" + control + " option").remove();
+    $("#" + control).append("<option value='0'>" + mensaje + "</option>");
+    //$("#" + control).selectpicker('refresh');
+    serviceCatalogoItem.getCategoria(headersprivilegios)
+        .then(response => {
+            $.each(response, function (index, tp) {
+                var selected = "";
+                if (val == tp.idCatalogoItem) selected = "Selected";
+                $("#" + control).append("<option value='" + tp.idCatalogoItem + "' " + selected + ">" + tp.descripcionCatalogoItem + "</option>");
+            });
+            //$("#" + control).selectpicker('refresh');
+            //$("#" + control).selectpicker('val', valor);
+        })
+        .catch(error => {
+            alertify.error(tituloAlert.seguridad, `Error select: ${error.messages}`)
+        });
+    callback(1);
+}
+function fillSelectStatus(control, valor, mensaje, callback) {
+
+    var val = valor == undefined ? 0 : valor;
+    $("#" + control + " option").remove();
+    $("#" + control).append("<option value='0'>" + mensaje + "</option>");
+    //$("#" + control).selectpicker('refresh');
+    serviceCatalogoItem.getStatus(headersprivilegios)
+        .then(response => {
+            $.each(response, function (index, tp) {
+                var selected = "";
+                if (val == tp.idCatalogoItem) selected = "Selected";
+                $("#" + control).append("<option value='" + tp.idCatalogoItem + "' " + selected + ">" + tp.descripcionCatalogoItem + "</option>");
+            });
+            //$("#" + control).selectpicker('refresh');
+            //$("#" + control).selectpicker('val', valor);
+        })
+        .catch(error => {
+            alertify.error(tituloAlert.seguridad, `Error select: ${error.messages}`)
+        });
+    callback(1);
+}
+function fillSelectClasificacionDocumento(control, valor, mensaje, callback) {
+
+    var val = valor == undefined ? 0 : valor;
+    $("#" + control + " option").remove();
+    $("#" + control).append("<option value='0'>" + mensaje + "</option>");
+    //$("#" + control).selectpicker('refresh');
+    serviceCatalogoItem.getClasificacionDocumento(headersprivilegios)
+        .then(response => {
+            $.each(response, function (index, tp) {
+                var selected = "";
+                if (val == tp.idCatalogoItem) selected = "Selected";
+                $("#" + control).append("<option value='" + tp.idCatalogoItem + "' " + selected + ">" + tp.descripcionCatalogoItem + "</option>");
+            });
+            //$("#" + control).selectpicker('refresh');
+            //$("#" + control).selectpicker('val', valor);
+        })
+        .catch(error => {
+            alertify.error(tituloAlert.seguridad, `Error select: ${error.messages}`)
+        });
+    callback(1);
+}
+function fillSelectTipoParentesco(control, valor, mensaje, callback) {
+
+    var val = valor == undefined ? 0 : valor;
+    $("#" + control + " option").remove();
+    $("#" + control).append("<option value='0'>" + mensaje + "</option>");
+    //$("#" + control).selectpicker('refresh');
+    serviceCatalogoItem.getParentesco(headersprivilegios)
+        .then(response => {
+            $.each(response, function (index, tp) {
+                var selected = "";
+                if (val == tp.idCatalogoItem) selected = "Selected";
+                $("#" + control).append("<option value='" + tp.idCatalogoItem + "' " + selected + ">" + tp.descripcionCatalogoItem + "</option>");
+            });
+            //$("#" + control).selectpicker('refresh');
+            //$("#" + control).selectpicker('val', valor);
+        })
+        .catch(error => {
+            alertify.error(tituloAlert.seguridad, `Error select: ${error.messages}`)
+        });
+    callback(1);
+}
+function fillSelectCalidadMigratoria(control, valor, mensaje, callback) {
+
+    var val = valor == undefined ? 0 : valor;
+    $("#" + control + " option").remove();
+    $("#" + control).append("<option value='0'>" + mensaje + "</option>");
+    //$("#" + control).selectpicker('refresh');
+    serviceCatalogoItem.getCalidadMigratoria(headersprivilegios)
+        .then(response => {
+            $.each(response, function (index, tp) {
+                var selected = "";
+                if (val == tp.idCatalogoItem) selected = "Selected";
+                $("#" + control).append("<option value='" + tp.idCatalogoItem + "' " + selected + ">" + tp.descripcionCatalogoItem + "</option>");
+            });
+            //$("#" + control).selectpicker('refresh');
+            //$("#" + control).selectpicker('val', valor);
+        })
+        .catch(error => {
+            alertify.error(tituloAlert.seguridad, `Error select: ${error.messages}`)
+        });
+    callback(1);
+}
+function fillSelectSubtipoSolicitud(control, valor, mensaje, tipoSolicitud, callback) {
+    var request = {
+        idCatalogo: tipoSolicitud
+    }
+    var val = valor == undefined ? 0 : valor;
+    $("#" + control + " option").remove();
+    $("#" + control).append("<option value='0'>" + mensaje + "</option>");
+    //$("#" + control).selectpicker('refresh');
+    serviceCatalogoItem.getSubtipoSolicitud(request, headersprivilegios)
+        .then(response => {
+            $.each(response, function (index, tp) {
+                var selected = "";
+                if (val == tp.idCatalogoItem) selected = "Selected";
+                $("#" + control).append("<option value='" + tp.idCatalogoItem + "' " + selected + ">" + tp.descripcionCatalogoItem + "</option>");
+            });
+            //$("#" + control).selectpicker('refresh');
+            //$("#" + control).selectpicker('val', valor);
+        })
+        .catch(error => {
+            alertify.error(tituloAlert.seguridad, `Error select: ${error.messages}`)
+        });
+    callback(1);
+}
+function fillSelectEstadoSolicitud(control, valor, mensaje, tipoSolicitud, callback) {
+    var request = {
+        idCatalogo: tipoSolicitud
+    }
+    var val = valor == undefined ? 0 : valor;
+    $("#" + control + " option").remove();
+    $("#" + control).append("<option value='0'>" + mensaje + "</option>");
+    //$("#" + control).selectpicker('refresh');
+    serviceCatalogoItem.getEstadoSolicitud(request, headersprivilegios)
+        .then(response => {
+            $.each(response, function (index, tp) {
+                var selected = "";
+                if (val == tp.idCatalogoItem) selected = "Selected";
+                $("#" + control).append("<option value='" + tp.idCatalogoItem + "' " + selected + ">" + tp.descripcionCatalogoItem + "</option>");
+            });
+            //$("#" + control).selectpicker('refresh');
+            //$("#" + control).selectpicker('val', valor);
+        })
+        .catch(error => {
+            alertify.error(tituloAlert.seguridad, `Error select: ${error.messages}`)
+        });
+    callback(1);
+}
+function fillSelectTipoSolicitud(control, valor, mensaje, callback) {
+
+    var val = valor == undefined ? 0 : valor;
+    $("#" + control + " option").remove();
+    $("#" + control).append("<option value='0'>" + mensaje + "</option>");
+    //$("#" + control).selectpicker('refresh');
+    serviceCatalogoItem.getTipoSolicitud(headersprivilegios)
+        .then(response => {
+            $.each(response, function (index, tp) {
+                var selected = "";
+                if (val == tp.idCatalogoItem) selected = "Selected";
+                $("#" + control).append("<option value='" + tp.idCatalogoItem + "' " + selected + ">" + tp.descripcionCatalogoItem + "</option>");
+            });
+            //$("#" + control).selectpicker('refresh');
+            //$("#" + control).selectpicker('val', valor);
+        })
+        .catch(error => {
+            alertify.error(tituloAlert.seguridad, `Error select: ${error.messages}`)
+        });
+    callback(1);
+}
+
+function fillSelectCategoriaVehiculo(control, valor, mensaje, callback) {
+
+    var val = valor == undefined ? 0 : valor;
+    $("#" + control + " option").remove();
+    $("#" + control).append("<option value='0'>" + mensaje + "</option>");
+    //$("#" + control).selectpicker('refresh');
+    serviceCatalogoItem.getCategoriaVehiculo(headersprivilegios)
+        .then(response => {
+            $.each(response, function (index, tp) {
+                var selected = "";
+                if (val == tp.idCatalogoItem) selected = "Selected";
+                $("#" + control).append("<option value='" + tp.idCatalogoItem + "' " + selected + ">" + tp.descripcionCatalogoItem + "</option>");
+            });
+            //$("#" + control).selectpicker('refresh');
+            //$("#" + control).selectpicker('val', valor);
+        })
+        .catch(error => {
+            alertify.error(tituloAlert.seguridad, `Error select: ${error.messages}`)
+        });
+    callback(1);
+}
+function fillSelectMarcaVehiculo(control, valor, mensaje, callback) {
+
+    var val = valor == undefined ? 0 : valor;
+    $("#" + control + " option").remove();
+    $("#" + control).append("<option value='0'>" + mensaje + "</option>");
+    //$("#" + control).selectpicker('refresh');
+    serviceCatalogoItem.getMarcaVehiculo(headersprivilegios)
+        .then(response => {
+            $.each(response, function (index, tp) {
+                var selected = "";
+                if (val == tp.idCatalogoItem) selected = "Selected";
+                $("#" + control).append("<option value='" + tp.idCatalogoItem + "' " + selected + ">" + tp.descripcionCatalogoItem + "</option>");
+            });
+            //$("#" + control).selectpicker('refresh');
+            //$("#" + control).selectpicker('val', valor);
+        })
+        .catch(error => {
+            alertify.error(tituloAlert.seguridad, `Error select: ${error.messages}`)
+        });
+    callback(1);
+}
+function fillSelectColorVehiculo(control, valor, mensaje, callback) {
+
+    var val = valor == undefined ? 0 : valor;
+    $("#" + control + " option").remove();
+    $("#" + control).append("<option value='0'>" + mensaje + "</option>");
+    //$("#" + control).selectpicker('refresh');
+    serviceCatalogoItem.getColorVehiculo(headersprivilegios)
+        .then(response => {
+            $.each(response, function (index, tp) {
+                var selected = "";
+                if (val == tp.idCatalogoItem) selected = "Selected";
+                $("#" + control).append("<option value='" + tp.idCatalogoItem + "' " + selected + ">" + tp.descripcionCatalogoItem + "</option>");
+            });
+            //$("#" + control).selectpicker('refresh');
+            //$("#" + control).selectpicker('val', valor);
+        })
+        .catch(error => {
+            alertify.error(tituloAlert.seguridad, `Error select: ${error.messages}`)
+        });
+    callback(1);
+}
+function fillSelectViaTrasladoVehiculo(control, valor, mensaje, callback) {
+
+    var val = valor == undefined ? 0 : valor;
+    $("#" + control + " option").remove();
+    $("#" + control).append("<option value='0'>" + mensaje + "</option>");
+    //$("#" + control).selectpicker('refresh');
+    serviceCatalogoItem.getViaTraslado(headersprivilegios)
+        .then(response => {
+            $.each(response, function (index, tp) {
+                var selected = "";
+                if (val == tp.idCatalogoItem) selected = "Selected";
+                $("#" + control).append("<option value='" + tp.idCatalogoItem + "' " + selected + ">" + tp.descripcionCatalogoItem + "</option>");
+            });
+            //$("#" + control).selectpicker('refresh');
+            //$("#" + control).selectpicker('val', valor);
+        })
+        .catch(error => {
+            alertify.error(tituloAlert.seguridad, `Error select: ${error.messages}`)
+        });
+    callback(1);
+}
+function fillSelectTipoDocCompraLocal(control, valor, mensaje, callback) {
+
+    var val = valor == undefined ? 0 : valor;
+    $("#" + control + " option").remove();
+    $("#" + control).append("<option value='0'>" + mensaje + "</option>");
+    //$("#" + control).selectpicker('refresh');
+    serviceCatalogoItem.getTipoDocCompralocal(headersprivilegios)
+        .then(response => {
+            $.each(response, function (index, tp) {
+                var selected = "";
+                if (val == tp.idCatalogoItem) selected = "Selected";
+                $("#" + control).append("<option value='" + tp.idCatalogoItem + "' " + selected + ">" + tp.descripcionCatalogoItem + "</option>");
+            });
+            //$("#" + control).selectpicker('refresh');
+            //$("#" + control).selectpicker('val', valor);
+        })
+        .catch(error => {
+            alertify.error(tituloAlert.seguridad, `Error select: ${error.messages}`)
+        });
+    callback(1);
+}
+
+
+/*COLOCAR LOS CODIGOS DE CATALOGO ITEM REFERENTE A TIPO DE SOLICITUD*/
+const K_ESTADOS_SOL_ACREDITADO = {
+    INICIADO: 1,
+    OBSERVADO: 2,
+    APROBADO: 5,
+    DE_BAJA: 9,
+    SUBSANADO: 6
+}
+const K_ESTADOS_SOL_CALIDAD_MIGRATORIA = {
+    INICIADO: 1,
+    OBSERVADO: 6,
+    APROBADO: 3,
+    PENDIENTE_FIRMA:2,
+    DE_BAJA: 10,
+    SUBSANADO: 7,
+    ENVIADO_MESA: 4,
+    ENTREGADO:5
+}
+const K_ESTADOS_SOL_CARNET_IDENTIDAD = {
+    INICIADO : 1,
+    OBSERVADO : 2,
+    PENDIENTE_IMPRESION:4,
+    IMPRESO : 5,
+    MESA_DE_PARTES:6,
+    ENTREGAGO:7,
+    SUBSANADO : 3,
+    DE_BAJA : 8
+}
+const K_ESTADOS_SOL_VEHICULAR_IMP = {
+    INICIADO: 1,
+    APROBADO: 2,
+    DE_BAJA: 11,
+    FIRMADO_PRIVILEGIOS: 3,
+    MESA_PARTES_RES_LIB: 4,
+    ENTREGADO_RES_LIB: 5,
+    RECIBIDO_NO_CONFORME: 6,
+    CON_RES_ADUANERA: 7,
+    MESA_PARTES_RES_ADU: 8,
+    ENTREGADO_RES_ADU: 9,
+    RECIBIDO_CON_ADU: 10
+}
+const K_ESTADOS_SOL_VEHICULAR_ADM = {
+    INICIADO: 1,
+    APROBADO: 2,
+    DE_BAJA: 7,
+    FIRMADO_PRIVILEGIOS: 4,
+    MESA_PARTES: 5,
+    RECHAZADO: 3,
+    ENTREGADO: 6
+}
+const K_ESTADOS_SOL_TARJETA_PROPIEDAD_TP = {
+    INICIADO: 1,
+    APROBADO: 2,
+    CON_CUR: 3,
+    PAGO_RECEPCIONADO: 4,
+    CON_TARJETA_IMPRESA: 5,
+    CON_PLACA_RECEPCIONADA: 6,
+    MESA_PARTES: 7,
+    ENTREGADO: 8,
+    BAJA: 9
+}
+const K_ESTADOS_SOL_TARJETA_PROPIEDAD = {
+    INICIADO: 1,
+    APROBADO: 2,
+    CON_TARJETA_IMPRESA: 3,
+    MESA_PARTES: 4,
+    ENTREGADO: 5,
+    BAJA:6
+}
+const K_ESTADOS_SOL_TP_DEVOLUCION_PLA = {
+    INICIADO: 1,
+    APROBADO: 2,
+    MESA_PARTES: 3,
+    ENTREGADO: 4,
+    BAJA: 5
+}
+/*COLOCAR LOS CODIGOS DE CATALOGO ITEM REFERENTE A SUBTIPO DE SOLICITUD*/
+const K_SUBTIPO_SOL_ACREDITADO = {
+    TITULAR: 1,
+    DEPENDIENTE: 2,
+    FINALIZACION: 3,
+    ACTUALIZAR: 4
+}
+
+const K_SUBTIPO_SOL_CALIDAD_MIGRATORIA = {
+    PROROGA: 1,
+    CAMBIO: 2,
+    ORDINARIO: 3,
+    EXTRAORDINARIO:4
+}
+
+const K_SUBTIPO_SOL_CARNET_IDENTIDAD= {
+    EMISION: 1,
+    RENOVACION: 2,
+    DUPLICADO: 3
+}
+const K_SUBTIPO_SOL_VEHICULAR = {
+    ADMISION: 2,
+    IMPORTACION: 1,
+}
+
+const K_TIPO_SOL = {
+    ACREDITACION:1,
+    CALIDAD_MIGRATORIA: 2,
+    CARNET_IDENTIDAD: 3,
+    IMPORTACION_VEHICULOS: 4,
+    TARJETA_PROPIEDAD_PLACAS: 5
+}
+
+const  K_TIPO_CONSULTA_VISA = {
+    VIGENTE : 1,
+    NO_VIGENTE:2
+}
+
+const K_ORIGEN_VEHICULO = {
+    IMPORTACION: 1,
+    ADMISION: 2,
+    COMPRA_LOCAL: 3
+}
+var origenConsulta = {
+    titular: 1,
+    titular_dependiente: 2,
+    titular_finalizacion: 3,
+    titular_actualizacion: 4,
+    dependiente: 5,
+}
+const K_SUBTIPO_SOL_TARJETA_PROPIEDAD = {
+    EMISION: 1,
+    CAMBIO: 2,
+    DUPLICADO_PLACA: 3,
+    DUPLICADO_TARJETA: 4,
+    DEVOLUCION_PLACAS:5
+}
+function readImage(input, img) {
+    // console.log(input.files);
+    if (input.files && input.files[0]) {
+        if (input.files[0].type == "image/jpeg" || input.files[0].type == "image/png") {
+            var reader = new FileReader();
+
+            reader.onload = function (e) {
+                $('#' + img).attr('src', e.target.result); // Renderizamos la imagen
+                $('#' + img).show();
+            }
+            reader.readAsDataURL(input.files[0]);
+        } else {
+            $("#" + img).attr("src", "../images/app/image_default.jpg");
+        }
+
+    } else {
+        $("#" + img).attr("src", "../images/app/image_default.jpg");
+    }
+}
