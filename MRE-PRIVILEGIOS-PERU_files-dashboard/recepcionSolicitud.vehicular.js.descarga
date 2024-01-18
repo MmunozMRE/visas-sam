@@ -1,0 +1,151 @@
+﻿ 
+var vehicularController = {
+    verSolicitudImportacion(control) {
+        var request = {
+            idSolicitud: parseInt($(control).data("codigosolicitud")),
+        }
+        serviceSolicitudVehicular.getSolicitudxId(request, headersprivilegios)
+            .then(response => {
+                
+                $("#lblCodigoSolicitudIv").html("Nro: " + response.codigoSolicitudGenerado);
+
+
+                $("#lblEstadoIv").html("<b>Estado:</b> " + estadoSpan(response.estadoSolicitud, response.codigoEstadoSolicitud, response.codigoTipoSolicitud, response.codigoSubtipoSolicitud));
+                $("#lblNumNotaIv").html("<b>Nota N°:</b> " + response.notaDiplomaticaNumero);
+                $("#lblNotaDiplomaticaIv").html("<button class='btn  btn-light btn-sm-2 text-primary ' data-bs-toggle='tooltip' data-bs-placement='top' title='Ver Nota Diplomática PDF' data-tipo='Nota diplomática' data-rutadocumento='" + response.notaDiplomaticaPdf + "' onclick='verDocumento(this)'><i class='bi bi-filetype-pdf'></i> Ver PDF</button>");
+
+                $("#lblFecCreaIv").html("<b>Fecha de creación:</b> " + response.fechaCreacionStr);
+                $("#lblResSolIv").html("<b>Responsable de solicitud:</b> " + response.usuarioCreacion);
+                $("#lblCategoriaVehiculoIv").html("<b>Categoria vehicular:</b> " + response.categoria);
+
+                $("#lblConrroceriaIv").html("<b>Carroceria:</b> " + response.carroceria);
+
+                $("#lblMarcaIv").html("<b>Marca:</b> " + response.marca);
+                $("#lvlModeloIv").html("<b>Modelo:</b> " + response.modelo);
+                $("#lvlMotorIv").html("<b>Motor:</b> " + response.numMotor);
+                $("#lvlChasisIv").html("<b>Chasis:</b>" + response.numChasis);
+                $("#lvlColorIv").html("<b>Color: </b>" + response.color);
+                $("#lvlAnioFabricacionIv").html("<b>Año de fabricacion: </b>" + response.anioFabrica);
+                $("#lvlCilindradaIv").html("<b>Cilindada: </b>" + response.cilindrada );
+                $("#lvlCombustibleIv").html("<b>Combustible: </b>" + response.combustible);
+                $("#lvlEjenIv").html("<b>Eje: </b>" + response.numEje);
+                $("#lvlRuedaIv").html("<b>Número de ruedas: </b>" + response.numRueda);
+                $("#lvlPasajerosIv").html("<b>Número de pasajeros: </b>" + response.numPasajero);
+                $("#lvlPesoNetoIv").html("<b>Peso neto (kg): </b>" + response.pesoNeto);
+                $("#lvlPesoBrutoIv").html("<b>Peso bruto (kg): </b>" + response.pesoBruto);
+                $("#lvlLongitudIv").html("<b>Longitud: </b>" + response.longitud);
+                $("#lvlAlturaIv").html("<b>Altura: </b>" + response.altura);
+                $("#lvlAnchoIv").html("<b>Ancho: </b>" + response.ancho);
+                $("#lvlCargaIv").html("<b>Carga útil: </b>" + response.cargaUtil);
+                $("#lvlObservacionesIv").html("<b>Observaciones: </b>" + response.observaciones);
+                $("#lblValorFobIv").html("<b>Valor FOB: </b>" + response.valorFob);
+                $("#lblValorCifIv").html("<b>Valor CIF: </b>" + response.valorCif);
+                $("#lblOtroValorIv").html("<b>Otro valor: </b>" + response.valorOtro);
+                $("#lblFacturaIv").html("<b>Factura comercial N°: </b>" + response.numFactura);
+                $("#lblProcedenciaIv").html("<b>Procedencia: </b>" + response.procedencia);
+                $("#lblCartaPorteIv").html("<b>Conocimiento de embarque / Guia area N° / Carta de Porte: </b>" + response.cartaPorte);
+                $("#lblFechaLlegadaIv").html("<b>Fecha de llegada: </b>" + response.fechaLlegadaStr);
+                $("#lblViaIv").html("<b>Via de traslado: </b>" + response.viaTraslado);
+                $("#lblAduanaIv").html("<b>Aduana: </b>" + response.aduana);
+                $("#lblAgenteAduanaIv").html("<b>Agente de aduana: </b>" + response.agenteAduana);
+                $("#lvlAsientosIv").html("<b>Número de asientos: </b>" + response.numAsiento);
+
+                verDocumentosAdjuntos(response.adjuntos, "#divDocumentosIv");
+                logSeguimiento(response.seguimiento, "#divSeguimientoIv");
+
+                if (response.idTipoParentesco != 0) {
+                    $("div[name='seccionTitular']").hide();
+                    $("div[name='seccionDependiente']").show();
+                    $("#lblNombresApeTitIv").html("<b>Nombre del titular: </b>" + response.nombreTitular + " " + response.apellidoPaternoTitular + " " + response.apellidoMaternoTitular);
+                    $("#lblParentescoIv").html("<b>Parentesco: </b>"+response.parentesco);
+                        
+                } else {
+                    $("div[name='seccionTitular']").show();
+                    $("div[name='seccionDependiente']").hide();
+                }
+
+                if (response.idAcreditacion == 0) {
+                    $("div[name='seccionDiplomatico']").hide();
+                } else {
+                    $("div[name='seccionDiplomatico']").show();
+                }
+
+                $("#lblNombreApellidoTitIv").html("<b> " + response.nombres+" " + response.apellidoPaterno + " " + (response.apellidoMaterno == null ? "" : response.apellidoMaterno) + "</b>");
+                
+                $("#imgFotoIv").attr("src", response.imagenFotoAcre);
+
+                $("#lblCategoriaIv").html("<b>Categoria:</b> " + response.categoriaAcreditado);
+                $("#lblCargoIv").html("<b>Cargo:</b> " + response.cargoAcreditado);
+                $("#lblStatusIv").html("<b>Status:</b> " + response.statusAcreditado);
+                $("#lblInicioAcreIv").html("<b>Fecha Inicio de acreditación:</b> " + response.fechaInicioFuncionAcreStr);
+
+
+                if (K_SUBTIPO_SOL_VEHICULAR.ADMISION == response.codigoSubtipoSolicitud) {
+                    $("#lblResolucionAduanaIv").html("");
+                    $("#lblNotaDiploMreIv").html("");
+                    if (response.notaDiplomaticaPdf != null) {
+                        $("#lblNotaDiploNumIv").html("Nota diplomática: N° " + response.notaDiplomaticaNumero + " <button class='btn  btn-light btn-sm-2 text-primary ' data-bs-toggle='tooltip' data-bs-placement='top' title='Ver Nota Diplomática PDF' data-tipo='Nota diplomática' data-rutadocumento='" + response.notaDiplomaticaPdf + "' onclick='verDocumento(this)'><i class='bi bi-filetype-pdf'></i> Ver PDF</button>");
+
+                    } else {
+                        $("#lblNotaDiploNumIv").html("");
+                    }
+                    if (response.documentoFirmado != null) {
+                        $("#lblDocumentoFirmadoIv").html("Solicitud firmada por el director " + " <button class='btn  btn-light btn-sm-2 text-primary ' data-bs-toggle='tooltip' data-bs-placement='top' title='Ver Solicitud firmada por el director' data-tipo='Solicitud firmada por el director' data-rutadocumento='" + response.documentoFirmado + "' onclick='verDocumento(this)'><i class='bi bi-filetype-pdf'></i> Ver PDF</button>");
+
+                    } else {
+                        $("#lblDocumentoFirmadoIv").html("");
+                    }
+                    $("#seccionDocumentosIv").show();
+                    $("#seccionValores").hide();
+                    $("#seccionAduanas").hide();
+
+                    $("#mdlTitleIv").html('Vista previa de la Solicitud de admisión temporal del vehículo <i class="bi bi-car-front"></i>');
+                } else if (K_SUBTIPO_SOL_VEHICULAR.IMPORTACION == response.codigoSubtipoSolicitud) {
+                    if (response.notaDiplomaticaPdf != null) {
+                        $("#lblNotaDiploNumIv").html("Nota diplomática: N° " + response.notaDiplomaticaNumero + " <button class='btn  btn-light btn-sm-2 text-primary ' data-bs-toggle='tooltip' data-bs-placement='top' title='Ver Nota Diplomática PDF' data-tipo='Nota diplomática' data-rutadocumento='" + response.notaDiplomaticaPdf + "' onclick='verDocumento(this)'><i class='bi bi-filetype-pdf'></i> Ver PDF</button>");
+
+                    } else {
+                        $("#lblNotaDiploNumIv").html("");
+                    }
+
+                    if (response.documentoFirmado != null) {
+                        $("#lblDocumentoFirmadoIv").html("Solicitud firmada por el director" + " <button class='btn  btn-light btn-sm-2 text-primary ' data-bs-toggle='tooltip' data-bs-placement='top' title='Ver Solicitud firmada por el director' data-tipo='Solicitud firmada por el director' data-rutadocumento='" + response.documentoFirmado + "' onclick='verDocumento(this)'><i class='bi bi-filetype-pdf'></i> Ver PDF</button>");
+
+                    } else {
+                        $("#lblDocumentoFirmadoIv").html("");
+                    }
+
+                    if (response.resolucionAduaneraPdf != null) {
+                        $("#lblResolucionAduanaIv").html("Resolución aduanera: N° " + response.resolucionAduaneraNum + " <button class='btn  btn-light btn-sm-2 text-primary ' data-bs-toggle='tooltip' data-bs-placement='top' title='Ver Resolución aduanera' data-tipo='Resolución aduanera' data-rutadocumento='" + response.resolucionAduaneraPdf + "' onclick='verDocumento(this)'><i class='bi bi-filetype-pdf'></i> Ver PDF</button>");
+
+                    } else {
+                        $("#lblResolucionAduanaIv").html("");
+                    }
+
+                    if (response.notaDiplomaticaMrePdf != null) {
+                        $("#lblNotaDiploMreIv").html("Nota diplomática - aduana: N° " + response.notaDiplomaticaMreNum + " <button class='btn  btn-light btn-sm-2 text-primary ' data-bs-toggle='tooltip' data-bs-placement='top' title='Ver Resolución aduanera' data-tipo='Resolución aduanera' data-rutadocumento='" + response.notaDiplomaticaMrePdf + "' onclick='verDocumento(this)'><i class='bi bi-filetype-pdf'></i> Ver PDF</button>");
+
+                    } else {
+                        $("#lblNotaDiploMreIv").html("");
+                    }
+
+                    $("#mdlTitleIv").html('Vista previa de la Solicitud de importación del vehículo <i class="bi bi-car-front"></i>');
+
+                    $("#seccionDocumentosIv").show();
+
+                    $("#seccionValores").show();
+                    $("#seccionAduanas").show();
+                } 
+
+                $("#modalViewImpVeh").modal("show");
+            })
+            .catch(error => {
+                msgException('verSolicitudImportacion', error);
+            });
+
+    },
+    
+ };
+
+
+ 

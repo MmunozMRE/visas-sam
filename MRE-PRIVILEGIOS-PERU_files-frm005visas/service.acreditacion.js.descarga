@@ -1,0 +1,111 @@
+﻿const metodoAcreditacion = {
+    route: 'acreditacion' 
+}
+var serviceAcreditacion = {
+   
+    async getPersonaAcreditadaPaginado(request, headersprivilegios) {
+        var requestOptions = {
+            method: 'GET',
+            headers: headersprivilegios,
+            redirect: 'follow',
+        };
+        loading(true);
+        var datos = await fetch(`${API_URL}${metodoAcreditacion.route}/obtenerpersonaacreditadapaginado?${formatParameter(request)}`, requestOptions)
+            .then(res => res.json())
+            .then(res => res)
+            .catch(err => err);
+
+        if (datos.messages !== undefined) {
+            loading(false);
+            return Promise.reject(datos);
+        } else {
+            loading(false);
+            return Promise.resolve(datos);
+        }
+    },
+    async getPersonaAcreditadaXid(request, headersprivilegios) {
+        var requestOptions = {
+            method: 'GET',
+            headers: headersprivilegios,
+            redirect: 'follow',
+            //body: JSON.stringify(request),
+        };
+        loading(true);
+        var datos = await fetch(`${API_URL}${metodoAcreditacion.route}/obtenerpersonaacreditadaxid?${formatParameter(request)}`, requestOptions)
+            .then(res => res.json())
+            .then(res => res)
+            .catch(err => err);
+
+        if (datos.messages !== undefined) {
+            loading(false);
+            return Promise.reject(datos);
+        } else {
+            loading(false);
+            return Promise.resolve(datos);
+        }
+    },
+    async getPersonaDependienteXid(request, headersprivilegios) {
+        var requestOptions = {
+            method: 'GET',
+            headers: headersprivilegios,
+            redirect: 'follow',
+            //body: JSON.stringify(request),
+        };
+        loading(true);
+        var datos = await fetch(`${API_URL}${metodoAcreditacion.route}/obtenerpersonaacreditadadepxid?${formatParameter(request)}`, requestOptions)
+            .then(res => res.json())
+            .then(res => res)
+            .catch(err => err);
+
+        if (datos.messages !== undefined) {
+            loading(false);
+            return Promise.reject(datos);
+        } else {
+            loading(false);
+            return Promise.resolve(datos);
+        }
+    },
+    async getAcreditacionxId(request, headersprivilegios) {
+        var requestOptions = {
+            method: 'GET',
+            headers: headersprivilegios,
+            redirect: 'follow',
+        };
+        loading(true);
+        var datos = await fetch(`${API_URL}${metodoAcreditacion.route}/obteneracreditacionxid?${formatParameter(request)}`, requestOptions)
+            .then(res => res.json())
+            .then(res => res)
+            .catch(err => err);
+
+        if (datos.messages !== undefined) {
+            loading(false);
+            return Promise.reject(datos);
+        } else {
+            loading(false);
+            return Promise.resolve(datos);
+        }
+    },
+    async getAcreditacionLog(request, headersprivilegios) {
+        var requestOptions = {
+            method: 'GET',
+            headers: headersprivilegios,
+            redirect: 'follow',
+        };
+        loading(true);
+        var datos = await fetch(`${API_URL}${metodoAcreditacion.route}/obteneracreditacionlog?${formatParameter(request)}`, requestOptions)
+            .then(res => res.json())
+            .then(res => res)
+            .catch(err => err);
+
+        if (datos.messages !== undefined) {
+            loading(false);
+            return Promise.reject(datos);
+        } else {
+            loading(false);
+            return Promise.resolve(datos);
+        }
+    },
+}
+
+ 
+

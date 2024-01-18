@@ -1,0 +1,497 @@
+﻿var tipoCalidad = {
+    prorroga: 1,
+    ordinario: 2,
+    cambio:3
+}
+var calidadController = {
+
+    
+    verSolicitudOrdinario(control) {
+    var request = {
+        idSolicitud: parseInt($(control).data("codigosolicitud")),
+        idUsuarioRolSession: encodeURIComponent(passport.getIdUserRol())
+    }
+        serviceSolicitudCalidad.getSolicitudxId(request, headersprivilegios)
+        .then(response => {
+            $("#mdlTitleOrd").html('Vista previa de la Solicitud de registro de calidad migratoria <i class="bi bi-file-earmark-text-fill"></i>');
+            $("#lblCodigoSolicitudO").html("Nro: " + response.codigoGenerado);
+
+            $("#seccionFechaPro").hide();
+            $("#seccionCambioCali").hide();
+
+            $("#lblEstadoO").html("<b>Estado:</b> " + estadoSpan(response.estadoSolicitud, response.codigoEstadoSolicitud, response.codigoTipoSolicitud));
+            $("#lblNumNotaO").html("<b>Nota N°:</b> " + response.notaDiplomaticaNumero);
+
+            $("#lblFecCreaO").html("<b>Fecha de creación:</b> " + response.fechaCreacionStr);
+            $("#lblResSolO").html("<b>Responsable de solicitud:</b> " + response.personaResponsable);
+            $("#lblEmbajadaO").html("<b>Origen de solicitud:</b> " + response.embajada);
+            $("#lblNombreApellidoTitO").html("<b> " + response.nombres + " " + response.apellidoPaterno + " " + (response.apellidoMaterno == null ? "" : response.apellidoMaterno) + "</b>");
+            $("#lblFecNacO").html("<b>Fecha de Nacimiento:</b> " + response.fechaNacimiento);
+            $("#lblEstCivilO").html("<b>Estado Civil:</b> " + response.estadoCivil);
+            $("#lblNacActO").html("<b>Nacionalidad actual:</b> " + response.nacionalidadActual);
+            $("#lblNumDocTipPasO").html("<b>N° y de tipo de pasaporte:</b> " + response.numeroDocumento + " - " + response.tipoDocumento);
+            $("#lblNacAntO").html("<b>Nacionalidades anteriores:</b> " + (response.nacionalidadAnterior == null ? "" : response.nacionalidadAnterior));
+            $("#lblDirPeruO").html("<b>Dirección en el Perú:</b> " + response.domicilioPeru);
+
+            $("#lblCategoriaO").html("<b>Categoria:</b> " + response.categoria);
+            $("#lblCargoO").html("<b>Cargo:</b> " + response.cargo);
+            $("#lblStatusO").html("<b>Status:</b> " + response.estatus);
+            $("#lblInicioAcreO").html("<b>Fecha Inicio de acreditación:</b> " + response.fechaInicioFuncionStr);
+            if (response.numeroSelloGenerado != null) {
+                $("#lblNumSelloO").html("<h4> <span class='badge text-bg-primary'><b>N° estampado generado:</b>" + response.numeroSelloGenerado) + "</span></h4>";
+                $("#lblNumSelloSegundoO").html("<h4> <span class='badge text-bg-primary'><b>N° estampado generado:</b>" + response.numeroSelloGenerado) + "</span></h4>";
+
+            } else {
+                $("#lblNumSelloSegundoO").html();
+                $("#lblNumSelloO").html("");
+            }
+            $("div label#lblFechaInicioSolO").show();
+            $("div label#lblFechaFinSolO").show();
+            $("#lblFechaInicioSolO").html("<b>Fecha de expedición:</b> " + response.fechaInicioVigenciaStr);
+            $("#lblFechaFinSolO").html("<b>Fecha de expiración:</b> " + response.fechaFinVigenciaStr);
+            $("div #lblCalMigSolO").show();
+            $("#lblCalMigSolO").html("<b>Calidad Migratoria solicitada :</b> " + response.calidadMigratoriaSolicitada);
+            $("#lblCalMigO").html("<b>Calidad Migratoria:</b> " + response.calidadMigratoriaActual);
+            
+            $("#seccionDatosCalidad").hide();
+            
+            $("div #lblNumSelloSegundoO").show();
+            if (response.documentoFirmado != '') {
+                $("#seccionDocFirmadoView").show();
+                $("#divDocFirmadoO").html("Documento firmado" + " <button data-input=" + response.documentoFirmado + " data-tipo='Documento firmado por el director' class='btn btn-outline-dark btn-sm' onclick='verDocumento(this)'><i class='bi bi-filetype-pdf'></i></button>");
+
+            } else {
+                $("#seccionDocFirmadoView").hide();
+                $("#divDocFirmadoO").html("");
+            }
+            
+            $("#imgFotoO").attr("src", response.imagenFoto);
+            if (response.idTipoParentesco == 0) {
+                $("div[name='seccionTitularO']").show();
+                $("div[name='seccionDependienteO']").hide();
+
+                $("#lblTitleDepTitO").html("Datos del titular: ");
+                $("#lblNombreTitularO").html("");
+                $("#lblParentescoO").html("");
+            } else {
+                $("div[name='seccionTitularO']").hide();
+                $("div[name='seccionDependienteO']").show();
+                $("#lblTitleDepTitO").html("Datos del dependiente: ");
+                $("#lblNombreTitularO").html("<b>Nombre del titular:</b> " + response.nombreTitular);
+                $("#lblParentescoO").html("<b>Parentesco con el titular:</b> " + response.parentesco);
+            }
+            $("#lblNotaDiplomaticaO").html("<button class='btn  btn-light btn-sm-2 text-primary ' data-bs-toggle='tooltip' data-bs-placement='top' title='Ver Nota Diplomática PDF' data-tipo='Nota diplomática' data-rutadocumento='" + response.notaDiplomaticaPdf + "' onclick='verDocumento(this)'><i class='bi bi-filetype-pdf'></i> Ver PDF</button>");
+            verDocumentosAdjuntos(response.adjuntos, "#divDocumentosO");
+            logSeguimiento(response.seguimiento, "#divSeguimientoO");
+            $("#modalViewOrdinario").modal("show");
+        })
+        .catch(error => {
+            msgException('verSolicitudOrdinario', error);
+        });
+
+    },
+    verSolicitudProrroga(control) {
+        var request = {
+            idSolicitud: parseInt($(control).data("codigosolicitud")),
+            idUsuarioRolSession: encodeURIComponent(passport.getIdUserRol())
+        }
+        serviceSolicitudCalidad.getSolicitudxId(request, headersprivilegios)
+            .then(response => {
+                $("#mdlTitleOrd").html('Vista previa de la Solicitud de prorroga de calidad migratoria <i class="bi bi-file-earmark-text-fill"></i>');
+
+                $("#lblCodigoSolicitudO").html("Nro: " + response.codigoGenerado);
+
+
+                $("#lblEstadoO").html("<b>Estado:</b> " + estadoSpan(response.estadoSolicitud, response.codigoEstadoSolicitud, response.codigoTipoSolicitud));
+                $("#lblNumNotaO").html("<b>Nota N°:</b> " + response.notaDiplomaticaNumero);
+
+                $("#lblFecCreaO").html("<b>Fecha de creación:</b> " + response.fechaCreacionStr);
+                $("#lblResSolO").html("<b>Responsable de solicitud:</b> " + response.personaResponsable);
+                $("#lblEmbajadaO").html("<b>Origen de solicitud:</b> " + response.embajada);
+                $("#lblNombreApellidoTitO").html("<b> " + response.nombres+ " " + response.apellidoPaterno + " " + (response.apellidoMaterno == null ? "" : response.apellidoMaterno) + "</b>");
+                $("#lblFecNacO").html("<b>Fecha de Nacimiento:</b> " + response.fechaNacimiento);
+                $("#lblEstCivilO").html("<b>Estado Civil:</b> " + response.estadoCivil);
+                $("#lblNacActO").html("<b>Nacionalidad actual:</b> " + response.nacionalidadActual);
+                $("#lblNumDocTipPasO").html("<b>N° y de tipo de pasaporte:</b> " + response.numeroDocumento + " - " + response.tipoDocumento);
+                $("#lblNacAntO").html("<b>Nacionalidades anteriores:</b> " + (response.nacionalidadAnterior == null ? "" : response.nacionalidadAnterior));
+                $("#lblDirPeruO").html("<b>Dirección en el Perú:</b> " + response.domicilioPeru);
+                // $("#lblTelPartO").html("<b>Nacionalidad actual:</b> " + response.nacionalidadActual);
+                $("#lblCategoriaO").html("<b>Categoria:</b> " + response.categoria);
+                $("#lblCargoO").html("<b>Cargo:</b> " + response.cargo);
+                $("#lblStatusO").html("<b>Status:</b> " + response.estatus);
+                $("#lblInicioAcreO").html("<b>Fecha Inicio de acreditación:</b> " + response.fechaInicioFuncionStr);
+                if (response.numeroSelloGenerado != null) {
+                    $("#lblNumSelloO").html("<h4><span class='badge text-bg-primary'><b>N° estampado generado:</b> " + response.numeroSelloGenerado) + "</span></h4>";
+                } else {
+                    $("#lblNumSelloO").html("");
+                }
+
+                $("#lblFechaInicioO").html("<b>Fecha de expedición:</b> " + response.fechaInicioVigenciaStr);
+                $("#lblFechaFinO").html("<b>Fecha de expiración:</b> " + response.fechaFinVigenciaStr);
+                $("#seccionFechaPro").show();
+                $("#seccionCambioCali").hide();
+                $("#divlblFechaInicioSolO").show();
+                $("#divlblFechaFinSolO").show();
+                $("#lblFechaProrrogaO").html("<b>Fecha de prorroga:</b> " + response.fechaProrrogaStr);
+                $("#divlblCalMigSolO").hide();
+                $("#lblCalMigSolO").html("<b>Calidad Migratoria solicitada:</b> " + response.calidadMigratoriaSolicitada);
+                $("#lblCalMigO").html("<b>Calidad Migratoria:</b> " + response.calidadMigratoriaActual);
+                if (response.idCalidadMigratoria == null || response.idCalidadMigratoria == 0) {
+                    $("#seccionNoCalidad").show();
+                    $("#seccionNoCalidad").html("<div class='col-md-12'>No se encontraron registros de calidad migratoria.</div>");
+                    $("#seccionCalidadMigratoria").hide();
+                } else {
+                    $("#seccionNoCalidad").hide();
+                    $("#seccionNoCalidad").html("");
+                    $("#seccionCalidadMigratoria").show();
+                }
+
+                if (response.idTipoParentesco == 0) {
+                    $("div[name='seccionTitularO']").show();
+                    $("div[name='seccionDependienteO']").hide();
+
+                    $("#lblTitleDepTitO").html("Datos del titular: ");
+                    $("#lblNombreTitularO").html("");
+                    $("#lblParentescoO").html("");
+                } else {
+                    $("div[name='seccionTitularO']").hide();
+                    $("div[name='seccionDependienteO']").show();
+                    $("#lblTitleDepTitO").html("Datos del dependiente: ");
+                    $("#lblNombreTitularO").html("<b>Nombre del titular:</b> " + response.nombreTitular);
+                    $("#lblParentescoO").html("<b>Parentesco con el titular:</b> " + response.parentesco);
+                }
+                if (response.documentoFirmado != '') {
+                    $("#seccionDocFirmadoView").show();
+                    $("#divDocFirmadoO").html("Documento firmado" + " <button data-input=" + response.documentoFirmado + " data-tipo='Documento firmado por el director' class='btn btn-outline-dark btn-sm' onclick='verDocumento(this)'><i class='bi bi-filetype-pdf'></i></button>");
+
+                } else {
+                    $("#seccionDocFirmadoView").hide();
+                    $("#divDocFirmadoO").html("");
+                }
+
+                $("#imgFotoO").attr("src", response.imagenFoto);
+                $("#lblNotaDiplomaticaO").html("<button class='btn  btn-light btn-sm-2 text-primary ' data-bs-toggle='tooltip' data-bs-placement='top' title='Ver Nota Diplomática PDF' data-tipo='Nota diplomática' data-rutadocumento='" + response.notaDiplomaticaPdf + "' onclick='verDocumento(this)'><i class='bi bi-filetype-pdf'></i> Ver PDF</button>");
+                  verDocumentosAdjuntos(response.adjuntos, "#divDocumentosO");
+                logSeguimiento(response.seguimiento, "#divSeguimientoO");
+                $("#modalViewOrdinario").modal("show");
+            })
+            .catch(error => {
+                msgException('verSolicitudOrdinario', error);
+            });
+
+    },
+    verSolicitudCambio(control) {
+        var request = {
+            idSolicitud: parseInt($(control).data("codigosolicitud")),
+            idUsuarioRolSession: encodeURIComponent(passport.getIdUserRol())
+        }
+        serviceSolicitudCalidad.getSolicitudxId(request, headersprivilegios)
+            .then(response => {
+                $("#mdlTitleOrd").html('Vista previa de la Solicitud de cambio de calidad migratoria <i class="bi bi-file-earmark-text-fill"></i>');
+
+                $("#lblCodigoSolicitudO").html("Nro: " + response.codigoGenerado);
+
+                $("#divlblFechaInicioSolO").hide();
+                $("#divlblFechaFinSolO").hide();
+                $("#lblEstadoO").html("<b>Estado:</b> " + estadoSpan(response.estadoSolicitud, response.codigoEstadoSolicitud, response.codigoTipoSolicitud));
+                $("#lblNumNotaO").html("<b>Nota N°:</b> " + response.notaDiplomaticaNumero);
+
+                $("#lblFecCreaO").html("<b>Fecha de creación:</b> " + response.fechaCreacionStr);
+                $("#lblResSolO").html("<b>Responsable de solicitud:</b> " + response.personaResponsable);
+                $("#lblEmbajadaO").html("<b>Origen de solicitud:</b> " + response.embajada);
+                $("#lblNombreApellidoTitO").html("<b> " + response.nombres+" " + response.apellidoPaterno + " " + (response.apellidoMaterno == null ? "" : response.apellidoMaterno) + "</b>");
+                $("#lblFecNacO").html("<b>Fecha de Nacimiento:</b> " + response.fechaNacimiento);
+                $("#lblEstCivilO").html("<b>Estado Civil:</b> " + response.estadoCivil);
+                $("#lblNacActO").html("<b>Nacionalidad actual:</b> " + response.nacionalidadActual);
+                $("#lblNumDocTipPasO").html("<b>N° y de tipo de pasaporte:</b> " + response.numeroDocumento + " - " + response.tipoDocumento);
+                $("#lblNacAntO").html("<b>Nacionalidades anteriores:</b> " + (response.nacionalidadAnterior == null ? "" : response.nacionalidadAnterior));
+                $("#lblDirPeruO").html("<b>Dirección en el Perú:</b> " + response.domicilioPeru);
+               
+                $("#lblCalidadCambioO").html("<b>Calidad migratoria solicitada:</b> " + response.calidadMigratoriaActual);
+
+                $("#lblCategoriaO").html("<b>Categoria:</b> " + response.categoria);
+                $("#lblCargoO").html("<b>Cargo:</b> " + response.cargo);
+                $("#lblStatusO").html("<b>Status:</b> " + response.estatus);
+                $("#lblInicioAcreO").html("<b>Fecha Inicio de acreditación:</b> " + response.fechaInicioFuncionStr);
+                if (response.numeroSelloGenerado != null) {
+                    $("#lblNumSelloO").html("<h4><span class='badge text-bg-primary'><b>N° estampado generado:</b> " + response.numeroSelloGenerado) + "</span></h4>";
+                } else {
+                    $("#lblNumSelloO").html("");
+                }
+                $("#lblFechaInicioO").html("<b>Fecha de expedición:</b> " + response.fechaInicioVigenciaStr);
+                $("#lblFechaFinO").html("<b>Fecha de expiración:</b> " + response.fechaFinVigenciaStr);
+                $("#lblCalMigSolO").html("<b>Calidad Migratoria solicitada:</b> " + response.calidadMigratoriaSolicitada);
+                $("#lblCalMigO").html("<b>Calidad Migratoria:</b> " + response.calidadMigratoriaActual);
+                $("#divlblCalMigSolO").show();
+                $("#seccionFechaPro").hide();
+                $("#seccionCambioCali").show();
+
+                $("#lblFechaProrrogaO").html("<b>Fecha de prorroga:</b> " + response.fechaProrrogaStr);
+
+                if (response.documentoFirmado != '') {
+                    $("#seccionDocFirmadoView").show();
+                    $("#divDocFirmadoO").html("Documento firmado" + " <button data-input=" + response.documentoFirmado + " data-tipo='Documento firmado por el director' class='btn btn-outline-dark btn-sm' onclick='verDocumento(this)'><i class='bi bi-filetype-pdf'></i></button>");
+
+                } else {
+                    $("#seccionDocFirmadoView").hide();
+                    $("#divDocFirmadoO").html("");
+                }
+
+                if (response.idTipoParentesco == 0) {
+                    $("div[name='seccionTitularO']").show();
+                    $("div[name='seccionDependienteO']").hide();
+
+                    $("#lblTitleDepTitO").html("Datos del titular: ");
+                    $("#lblNombreTitularO").html("");
+                    $("#lblParentescoO").html("");
+                } else {
+                    $("div[name='seccionTitularO']").hide();
+                    $("div[name='seccionDependienteO']").show();
+                    $("#lblTitleDepTitO").html("Datos del dependiente: ");
+                    $("#lblNombreTitularO").html("<b>Nombre del titular:</b> " + response.nombreTitular);
+                    $("#lblParentescoO").html("<b>Parentesco con el titular:</b> " + response.parentesco);
+                }
+                $("#imgFotoO").attr("src", response.imagenFoto);
+                $("#lblNotaDiplomaticaO").html("<button class='btn  btn-light btn-sm-2 text-primary ' data-bs-toggle='tooltip' data-bs-placement='top' title='Ver Nota Diplomática PDF' data-tipo='Nota diplomática' data-rutadocumento='" + response.notaDiplomaticaPdf + "' onclick='verDocumento(this)'><i class='bi bi-filetype-pdf'></i> Ver PDF</button>");
+
+                verDocumentosAdjuntos(response.adjuntos, "#divDocumentosO");
+                logSeguimiento(response.seguimiento, "#divSeguimientoO");
+
+                if (response.idCalidadMigratoria == null || response.idCalidadMigratoria == 0) {
+                    $("#seccionNoCalidad").show();
+                    $("#seccionNoCalidad").html("<div class='col-md-12'>No se encontraron registros de calidad migratoria.</div>");
+                    $("#seccionCalidadMigratoria").hide();
+                } else {
+                    $("#seccionNoCalidad").hide();
+                    $("#seccionNoCalidad").html("");
+                    $("#seccionCalidadMigratoria").show();
+                }
+
+
+                $("#modalViewOrdinario").modal("show");
+            })
+            .catch(error => {
+                msgException('verSolicitudOrdinario', error);
+            });
+
+    },
+
+
+
+    verSolicitudOrdinarioModificar(control) {
+        var request = {
+            idSolicitud: parseInt($(control).data("codigosolicitud")),
+            idUsuarioRolSession: encodeURIComponent(passport.getIdUserRol())
+        }
+        serviceSolicitudCalidad.getSolicitudxId(request, headersprivilegios)
+            .then(response => {
+                $("#divProrroga").hide();
+                $("#divCambio").hide();
+                $("#mdlTitleModiOrd").html('Ficha de registro de calidad migratoria <i class="bi bi-person-plus-fill"></i>');
+
+                $("#hcodigoAccion").val(tipoCalidad.ordinario);
+                $("#hidSolOrd").val(response.idSolicitud);
+                $("#dllStatusO").prop("disabled", true);
+                $("#dllCategoriaO").prop("disabled", true);
+                $("#dllCargoO").prop("disabled", true);
+                $("#txtNombresApellidosO").prop("disabled", true);
+                $("#txtFechaInicioFuncionO").prop("disabled", true);
+
+                fillSelectClasificacionDocumento("dllTipoDocumentoAdjuntoO", 0, "Seleccione", function () { });
+                fillSelectStatus("dllStatusO", response.idEstatus, "Seleccione", function () { });
+                fillSelectCategoria("dllCategoriaO", response.idCategoria, "Seleccione", function () { });
+                fillSelectCargos("dllCargoO", response.idCargo, "Seleccione", function () { });
+
+                $("#txtNombresApellidosO").val(response.nombres + " " + response.apellidoPaterno + " " + (response.apellidoMaterno == null ? "" : response.apellidoMaterno));
+               
+                $("#txtFechaInicioFuncionO").val(response.fechaInicioFuncionModi);
+
+                $("#imgFotoAcreditadoO").attr("src", response.imagenFoto);
+
+                $("#txtFechaInicioO").val(response.fechaInicioVigenciaModi);
+                $("#txtFechaFinO").val(response.fechaFinVigenciaModi);
+                $("#txtNotaDiplomaticaO").val(response.notaDiplomaticaNumero);
+
+                documentosAdjuntos = response.adjuntos;
+                tablaDocumentosAdjuntosGeneral(response.adjuntos, "bodyDocumentosAdjuntosO")
+           
+                logSeguimiento(response.seguimiento, "#divLogSegOrd");
+                fillSelectCalidadMigratoria("dllStatusNewO", response.idTipoCalidadMigratoriaSolicitada, "Seleccione", function () { });
+
+                $("#btnNotDipO").attr("data-rutadocumento", response.notaDiplomaticaPdf);
+                $("#btnNotDipO").attr("data-tipo", "Nota diplomática");
+                $("#btnNotDipO").attr("onclick","verDocumento(this)");
+
+                $("#txtFechaInicioO").prop("disabled", false);
+                $("#txtFechaFinO").prop("disabled", false);
+                $("#dllStatusNewO").prop("disabled", false);
+                $("#txtNombresApellidosTitO").prop("disabled", true);
+                $("#dllParentescoO").prop("disabled", true);
+
+                if (response.idTipoParentesco == 0) {
+                    $("div[name='seccionTitularO']").show();
+                    $("div[name='seccionDependienteO']").hide();
+
+                    $("#txtNombresApellidosTitO").val("");
+                } else {
+                    $("div[name='seccionTitularO']").hide();
+                    $("div[name='seccionDependienteO']").show();
+
+                    $("#txtNombresApellidosTitO").val(response.nombreTitular);
+                    fillSelectTipoParentesco("dllParentescoO", response.idTipoParentesco, "Seleccione", function () { });
+                }
+
+                $("#modalModificarOrdinario").modal("show");
+            })
+            .catch(error => {
+                alertify.error(tituloAlert.seguridad, error.messages)
+            });
+
+    },
+    verSolicitudProrrogaModificar(control) {
+        var request = {
+            idSolicitud: parseInt($(control).data("codigosolicitud")),
+            idUsuarioRolSession: encodeURIComponent(passport.getIdUserRol())
+        }
+        serviceSolicitudCalidad.getSolicitudxId(request, headersprivilegios)
+            .then(response => {
+                $("#hcodigoAccion").val(tipoCalidad.prorroga);
+                $("#hidSolOrd").val(response.idSolicitud);
+                $("#dllStatusO").prop("disabled", true);
+                $("#dllCategoriaO").prop("disabled", true);
+                $("#dllCargoO").prop("disabled", true);
+                $("#txtNombresApellidosO").prop("disabled", true);
+                $("#txtFechaInicioFuncionO").prop("disabled", true);
+
+                fillSelectClasificacionDocumento("dllTipoDocumentoAdjuntoO", 0, "Seleccione", function () { });
+                fillSelectStatus("dllStatusO", response.idEstatus, "Seleccione", function () { });
+                fillSelectCategoria("dllCategoriaO", response.idCategoria, "Seleccione", function () { });
+                fillSelectCargos("dllCargoO", response.idCargo, "Seleccione", function () { });
+                $("#mdlTitleModiOrd").html('Ficha de registro de prorroga de calidad migratoria <i class="bi bi-person-plus-fill"></i>');
+
+                $("#txtNombresApellidosO").val(response.nombres + " " + response.apellidoPaterno + " " + (response.apellidoMaterno == null ? "" : response.apellidoMaterno));
+
+                $("#txtFechaInicioFuncionO").val(response.fechaInicioFuncionModi);
+
+                $("#imgFotoAcreditadoO").attr("src", response.imagenFoto);
+
+                $("#txtFechaInicioO").val(response.fechaInicioVigenciaModi);
+                $("#txtFechaFinO").val(response.fechaFinVigenciaModi);
+                $("#txtNotaDiplomaticaO").val(response.notaDiplomaticaNumero);
+                $("#divProrroga").show();
+                $("#divCambio").hide();
+                $("#txtFechaProrrogaO").val(response.fechaProrrogaModi);
+
+                documentosAdjuntos = response.adjuntos;
+                tablaDocumentosAdjuntosGeneral(response.adjuntos, "bodyDocumentosAdjuntosO")
+
+                logSeguimiento(response.seguimiento, "#divLogSegOrd");
+                fillSelectCalidadMigratoria("dllStatusNewO", response.idTipoCalidadMigratoriaActual, "Seleccione", function () { });
+
+                $("#btnNotDipO").attr("data-rutadocumento", response.notaDiplomaticaPdf);
+                $("#btnNotDipO").attr("data-tipo", "Nota diplomática");
+                $("#btnNotDipO").attr("onclick", "verDocumento(this)");
+
+                $("#txtFechaInicioO").prop("disabled",true);
+                $("#txtFechaFinO").prop("disabled", true);
+                $("#dllStatusNewO").prop("disabled", true);
+
+                $("#txtNombresApellidosTitO").prop("disabled", true);
+                $("#dllParentescoO").prop("disabled", true);
+
+                if (response.idTipoParentesco == 0) {
+                    $("div[name='seccionTitularO']").show();
+                    $("div[name='seccionDependienteO']").hide();
+
+                    $("#txtNombresApellidosTitO").val("");
+                } else {
+                    $("div[name='seccionTitularO']").hide();
+                    $("div[name='seccionDependienteO']").show();
+
+                    $("#txtNombresApellidosTitO").val(response.nombreTitular);
+                    fillSelectTipoParentesco("dllParentescoO", response.idTipoParentesco, "Seleccione", function () { });
+                }
+
+                $("#modalModificarOrdinario").modal("show");
+            })
+            .catch(error => {
+                alertify.error(tituloAlert.seguridad, error.messages)
+            });
+
+    },
+    verSolicitudCambioModificar(control) {
+        var request = {
+            idSolicitud: parseInt($(control).data("codigosolicitud")),
+            idUsuarioRolSession: encodeURIComponent(passport.getIdUserRol())
+        }
+        serviceSolicitudCalidad.getSolicitudxId(request, headersprivilegios)
+            .then(response => {
+                $("#divProrroga").hide();
+                $("#mdlTitleModiOrd").html('Ficha de registro de cambio de calidad migratoria <i class="bi bi-person-plus-fill"></i>');
+
+                $("#hcodigoAccion").val(tipoCalidad.cambio);
+                $("#hidSolOrd").val(response.idSolicitud);
+                $("#dllStatusO").prop("disabled", true);
+                $("#dllCategoriaO").prop("disabled", true);
+                $("#dllCargoO").prop("disabled", true);
+                $("#txtNombresApellidosO").prop("disabled", true);
+                $("#txtFechaInicioFuncionO").prop("disabled", true);
+
+                fillSelectClasificacionDocumento("dllTipoDocumentoAdjuntoO", 0, "Seleccione", function () { });
+                fillSelectStatus("dllStatusO", response.idEstatus, "Seleccione", function () { });
+                fillSelectCategoria("dllCategoriaO", response.idCategoria, "Seleccione", function () { });
+                fillSelectCargos("dllCargoO", response.idCargo, "Seleccione", function () { });
+
+                $("#txtNombresApellidosO").val(response.nombres + " " + response.apellidoPaterno + " " + (response.apellidoMaterno == null ? "" : response.apellidoMaterno));
+
+                $("#txtFechaInicioFuncionO").val(response.fechaInicioFuncionModi);
+
+                $("#imgFotoAcreditadoO").attr("src", response.imagenFoto);
+
+                $("#txtFechaInicioO").val(response.fechaInicioVigenciaModi);
+                $("#txtFechaFinO").val(response.fechaFinVigenciaModi);
+                $("#txtNotaDiplomaticaO").val(response.notaDiplomaticaNumero);
+
+                documentosAdjuntos = response.adjuntos;
+                tablaDocumentosAdjuntosGeneral(response.adjuntos, "bodyDocumentosAdjuntosO")
+
+                logSeguimiento(response.seguimiento, "#divLogSegOrd");
+                fillSelectCalidadMigratoria("dllStatusNewO", response.idTipoCalidadMigratoriaActual, "Seleccione", function () { });
+
+                $("#btnNotDipO").attr("data-rutadocumento", response.notaDiplomaticaPdf);
+                $("#btnNotDipO").attr("data-tipo", "Nota diplomática");
+                $("#btnNotDipO").attr("onclick", "verDocumento(this)");
+
+                $("#divCambio").show();
+                fillSelectCalidadMigratoria("dllStatusCambio", response.idTipoCalidadMigratoriaSolicitada, "Seleccione", function () { });
+                $("#txtFechaInicioO").prop("disabled", true);
+                $("#txtFechaFinO").prop("disabled", true);
+                $("#dllStatusNewO").prop("disabled", true);
+
+                $("#txtNombresApellidosTitO").prop("disabled", true);
+                $("#dllParentescoO").prop("disabled", true);
+
+                if (response.idTipoParentesco == 0) {
+                    $("div[name='seccionTitularO']").show();
+                    $("div[name='seccionDependienteO']").hide();
+
+                    $("#txtNombresApellidosTitO").val("");
+                } else {
+                    $("div[name='seccionTitularO']").hide();
+                    $("div[name='seccionDependienteO']").show();
+
+                    $("#txtNombresApellidosTitO").val(response.nombreTitular);
+                    fillSelectTipoParentesco("dllParentescoO", response.idTipoParentesco, "Seleccione", function () { });
+                }
+
+                $("#modalModificarOrdinario").modal("show");
+            })
+            .catch(error => {
+                alertify.error(tituloAlert.seguridad, error.messages)
+            });
+
+    },
+ };
+
+
+ 

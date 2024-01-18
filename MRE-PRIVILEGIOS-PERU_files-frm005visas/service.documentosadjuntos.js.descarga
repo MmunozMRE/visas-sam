@@ -1,0 +1,48 @@
+﻿const metodoDocumentosAdjuntos = {
+    route: 'documentosadjuntos'
+}
+
+var serviceDocumentosAdjuntos = {
+    async insDocumentosAdjuntos(request, headersprivilegios) {
+
+        var requestOptions = {
+            method: 'POST',
+            headers: headersprivilegios,
+            redirect: 'follow',
+            body: JSON.stringify(request)
+        };
+        loading(true);
+        var datos = await fetch(`${API_URL}${metodoDocumentosAdjuntos.route}`, requestOptions)
+            .then(res => res.json())
+            .then(res => res)
+            .catch(err => err);
+
+        if (datos.messages !== undefined) {
+            loading(false);
+            return Promise.reject(datos);
+        } else {
+            loading(false);
+            return Promise.resolve({ codigoGenerado: datos });
+        }
+    },
+    async eliminarListaDocumentosAdjuntos(request, headersprivilegios) {
+        loading(true);
+        var requestOptions = {
+            method: 'PUT',
+            headers: headersprivilegios,
+            redirect: 'follow',
+            body: JSON.stringify(request)
+        };
+        var datos = await fetch(`${API_URL}${metodoDocumentosAdjuntos.route}/eliminarlista`, requestOptions)
+            .then(res => res.json())
+            .then(res => res)
+            .catch(err => err);
+        if (datos.messages !== undefined) {
+            loading(false);
+            return Promise.reject(datos);
+        } else {
+            loading(false);
+            return Promise.resolve(datos);
+        }
+    },
+}

@@ -1,0 +1,28 @@
+﻿const metodoPersona = {
+    route: 'persona' 
+}
+var servicePersona = {
+    async getPersonaxDocumento(request, headersprivilegios) {
+        var requestOptions = {
+            method: 'GET',
+            headers: headersprivilegios,
+            redirect: 'follow'
+        };
+        loading(true);
+        var datos = await fetch(`${API_URL}${metodoPersona.route}/obtenerxdocumento?${formatParameter(request)}`, requestOptions)
+            .then(res => res.json())
+            .then(res => res)
+            .catch(err => err);
+
+        if (datos.messages !== undefined) {
+            loading(false);
+            return Promise.reject(datos);
+        } else {
+            loading(false);
+            return Promise.resolve(datos);
+        }
+    },
+}
+
+ 
+

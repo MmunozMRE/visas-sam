@@ -1,0 +1,196 @@
+﻿ 
+var carnetController = {
+    verSolicitudEmision(control) {
+        var request = {
+            idSolicitud: parseInt($(control).data("codigosolicitud")),
+            idUsuarioRolSession: encodeURIComponent(passport.getIdUserRol())
+        }
+        serviceSolicitudCarnet.getSolicitudxId(request, headersprivilegios)
+            .then(response => {
+                $("#mdlTitleCar").html('Vista previa de la Solicitud de emisión de carnet de identidad <i class="bi bi-file-earmark-text-fill"></i>');
+
+                $("#lblCodigoSolicitudCi").html("Nro: " + response.codigoGenerado);
+
+                if (K_SUBTIPO_SOL_CARNET_IDENTIDAD.RENOVACION == response.codigoSubTipoSolicitud) {
+                    $("#seccionDatosCarnet").show();
+                    $("#lblFechaEmisionAntCi").html("<b>Fecha de emisión: </b>" + response.fechaEmisionAnt);
+                    $("#lblFechaExpiracioAntnCi").html("<b>Fecha de expiración: </b>" + response.fechaVigenciaAnt);
+                    $("#imgFirmaAntCi").attr("src", response.fotoFirmaAnt);
+                    $("#imgFotoFirmaCi").show();
+                } else if (K_SUBTIPO_SOL_CARNET_IDENTIDAD.DUPLICADO == response.codigoSubTipoSolicitud) {
+                    $("#seccionDatosCarnet").show();
+                    $("#imgFotoFirmaCi").hide();
+                    $("#lblFechaEmisionAntCi").html("<b>Fecha de emisión: </b>" + response.fechaEmisionAnt);
+                    $("#lblFechaExpiracioAntnCi").html("<b>Fecha de expiración: </b>" + response.fechaVigenciaAnt);
+                    $("#imgFirmaAntCi").attr("src", response.fotoFirmaAnt);
+                } else {
+                    $("#imgFotoFirmaCi").show();
+                    $("#seccionDatosCarnet").hide();
+                }
+                
+                
+
+                $("#lblEstadoCi").html("<b>Estado:</b> " + estadoSpan(response.estadoSolicitud, response.codigoEstadoSolicitud, response.codigoTipoSolicitud));
+                $("#lblNumNotaCi").html("<b>Nota N°:</b> " + response.notaDiplomaticaNumero);
+                $("#lblNumeroCarnetIdentidad").html("<b>Numero de carnet de identidad:</b> " + response.numeroCarnetIdentidad);
+
+                $("#lblFecCreaCi").html("<b>Fecha de creación:</b> " + response.fechaSolicitud);
+                $("#lblResSolCi").html("<b>Responsable de solicitud:</b> " + response.personaResponsable);
+                $("#lblEmbajadaCi").html("<b>Origen de solicitud:</b> " + response.embajada);
+
+                $("#lblNombreApellidoTitCi").html("<b> " + response.nombres+" " + response.apellidoPaterno + " " + (response.apellidoMaterno == null ? "" : response.apellidoMaterno) + "</b>");
+                $("#lblFecNacCi").html("<b>Fecha de Nacimiento:</b> " + response.fechaNacimiento);
+                $("#lblEstCivilCi").html("<b>Estado Civil:</b> " + response.estadoCivil);
+                $("#lblNacActCi").html("<b>Nacionalidad actual:</b> " + response.nacionalidadActual);
+                $("#lblNumDocTipPasCi").html("<b>N° y de tipo de pasaporte:</b> " + response.numeroDocumento + " - " + response.tipoDocumento);
+                $("#lblNacAntCi").html("<b>Nacionalidades anteriores:</b> " + (response.nacionalidadAnterior == null ? "" : response.nacionalidadAnterior));
+                $("#lblDirPeruCi").html("<b>Dirección en el Perú:</b> " + response.domicilioPeru);
+
+              
+                $("#lblCategoriaCi").html("<b>Categoria:</b> " + response.categoria);
+                $("#lblCargoCi").html("<b>Cargo:</b> " + response.cargo);
+                $("#lblStatusCi").html("<b>Status:</b> " + response.estatus);
+                $("#lblInicioAcreCi").html("<b>Fecha Inicio de acreditación:</b> " + response.fechaInicioFuncionAcreStr);
+                $("#lblFinAcreCi").html("<b>Fecha Fin de acreditación:</b> " + response.fechaFinFuncionAcreStr);
+             
+                $("#lblNumSelloCi").html("<h4><span class='badge text-bg-primary'><b>N° estampado generado:</b> " + response.numeroSelloGenerado + "</span></h4>");
+                $("#lblNumeroAcreCi").html("<h4><span class='badge text-bg-primary'><b>N° acreditación:</b> " + response.numeroAcreditacion + "</span></h4>");
+
+                $("#lblFechaInicioCi").html("<b>Fecha de expedición:</b> " + response.fechaInicioCalStr);
+                $("#lblFechaFinCi").html("<b>Fecha de expiración:</b> " + response.fechaFinCalStr);
+                $("#lblCalMigCi").html("<b>Calidad Migratoria:</b> " + response.tipoCalidadMigratoria);
+                $("#lblFechaEmiCi").html("<b>Fecha de emisión:" + response.fechaEmisionStr + " </b>");
+                $("#lblFechaExpiCi").html("<b>Fecha de expiración:" + response.fechaVigenciaStr + " </b>");
+                $("#imgFotoCi").attr("src", response.imagenFotoAcre);
+                $("#imgFotoSolCi").attr("src", response.imagenFoto);
+                $("#imgFotoFirmaCi").attr("src", response.fotoFirma);
+                $("#lblNotaDiplomaticaCi").html("<button class='btn  btn-light btn-sm-2 text-primary ' data-bs-toggle='tooltip' data-bs-placement='top' title='Ver Nota Diplomática PDF' data-tipo='Nota diplomática' data-rutadocumento='" + response.notaDiplomaticaPdf + "' onclick='verDocumento(this)'><i class='bi bi-filetype-pdf'></i> Ver PDF</button>");
+
+                verDocumentosAdjuntos(response.adjuntos, "#divDocumentosCi");
+                logSeguimiento(response.seguimiento, "#divSeguimientoCi");
+
+                if (response.idTipoParentesco != 0) {
+                    $("div[name='seccionTitular']").hide();
+                    $("div[name='seccionDependiente']").show();
+                    $("#lblNombresApeTitCim").html("<b>Nombre del titular: </b>" + response.nombreTitular);
+                    $("#lblParentescoCim").html("<b>Parentesco: </b>"+response.parentesco);
+                        
+                } else {
+                    $("div[name='seccionTitular']").show();
+                    $("div[name='seccionDependiente']").hide();
+                }
+
+                $("#modalViewEmision").modal("show");
+            })
+            .catch(error => {
+                msgException('verSolicitudEmision', error);
+            });
+
+    },
+    
+    verSolicitudEmisionModificar(control) {
+        var request = {
+            idSolicitud: parseInt($(control).data("codigosolicitud")),
+            idUsuarioRolSession: encodeURIComponent(passport.getIdUserRol())
+        }
+        serviceSolicitudCarnet.getSolicitudxId(request, headersprivilegios)
+            .then(response => {
+                
+                if (response.codigoSubTipoSolicitud == K_SUBTIPO_SOL_CARNET_IDENTIDAD.EMISION) {
+                    $("#hcodigoAcCim").val(K_SUBTIPO_SOL_CARNET_IDENTIDAD.EMISION);
+                    $("#mdlTitleModiCim").html('Ficha de registro de emisión de carnet de identidad <i class="bi bi-person-plus-fill"></i>');
+                    $("#fileFotoFirma").show();
+                } else if (response.codigoSubTipoSolicitud == K_SUBTIPO_SOL_CARNET_IDENTIDAD.DUPLICADO) {
+                    $("#hcodigoAcCim").val(K_SUBTIPO_SOL_CARNET_IDENTIDAD.DUPLICADO);
+                    $("#mdlTitleModiCim").html('Ficha de registro de duplicado de carnet de identidad <i class="bi bi-person-plus-fill"></i>');
+                    $("#fileFotoFirma").hide();
+                } else if (response.codigoSubTipoSolicitud == K_SUBTIPO_SOL_CARNET_IDENTIDAD.RENOVACION) {
+                    $("#hcodigoAcCim").val(K_SUBTIPO_SOL_CARNET_IDENTIDAD.RENOVACION);
+                    $("#mdlTitleModiCim").html('Ficha de registro de renovación de carnet de identidad <i class="bi bi-person-plus-fill"></i>');
+                    $("#fileFotoFirma").show();
+                }
+
+
+                var requestdep = {
+                    idTitular: response.idPersona
+                }
+
+                if (response.idTipoParentesco != 0) {
+                    $("div[name='seccionTitular']").hide();
+                    $("div[name='seccionDependiente']").show();
+
+                    serviceAcreditacion.getPersonaAcreditadaXid(requestdep, headersprivilegios)
+                        .then(responseDep => {
+                            $("#txtNombresApeTitCim").val(responseDep.nombreTitular);
+                            fillSelectTipoParentesco("dllParentescoCim", responseDep.idTipoParentesco, "Seleccione", function () { })
+                        })
+                        .catch(error => {
+                            msgException('seleccionarPersona', error);
+                        });
+                } else {
+                    $("div[name='seccionTitular']").show();
+                    $("div[name='seccionDependiente']").hide();
+                }
+
+
+                $("#hidSolCim").val(response.idSolicitud);
+                $("#dllStatusCim").prop("disabled", true);
+                $("#dllCategoriaCim").prop("disabled", true);
+                $("#dllCargoCim").prop("disabled", true);
+                $("#txtNombresApeCim").prop("disabled", true);
+                $("#txtFechaInicioFuncionCim").prop("disabled", true);
+                $("#dllParentescoCim").prop("disabled", true);
+                $("#txtNombresApeTitCim").prop("disabled", true);
+                $("#txtFechaEmisionCim").prop("disabled", true);
+                $("#txtFechaExpiracionCim").prop("disabled", true);
+                $("#txtNumIdenCim").prop("disabled", true);
+
+                fillSelectClasificacionDocumento("dllTipoDocumentoAdjuntoCim", 0, "Seleccione", function () { });
+                fillSelectStatus("dllStatusCim", response.idEstatus, "Seleccione", function () { });
+                fillSelectCategoria("dllCategoriaCim", response.idCategoria, "Seleccione", function () { });
+                fillSelectCargos("dllCargoCim", response.idCargo, "Seleccione", function () { });
+
+                $("#txtNombresApeCim").val(response.nombres + " " + response.apellidoPaterno + " " + (response.apellidoMaterno == null ? "" : response.apellidoMaterno));
+
+                $("#txtFechaInicioFuncionCim").val(response.fechaInicioFuncionAcreModi);
+
+                $("#imgFotoAcreditadoCim").attr("src", response.imagenFoto);
+                
+                $("#imgFirmaCim").attr("src", response.fotoFirma);
+
+                $("#txtFechaInicioCim").val(response.fechaEmisionModi);
+                $("#txtFechaFinCim").val(response.fechaVigenciaModi);
+                $("#txtNotaDiplomaticaCim").val(response.notaDiplomaticaNumero);
+
+                $("#txtFechaEmisionCim").val(response.fechaEmisionModi);
+                $("#txtFechaExpiracionCim").val(response.fechaVigenciaModi);
+                $("#txtNumIdenCim").val(response.numeroCarnetIdentidad);
+                documentosAdjuntos = response.adjuntos;
+                tablaDocumentosAdjuntosGeneral(response.adjuntos, "bodyDocumentosAdjuntosCim")
+
+                logSeguimiento(response.seguimiento, "#divLogSegCim");
+                fillSelectCalidadMigratoria("dllCalidadCim", response.idTipoCalidadMigratoria, "Seleccione", function () { });
+
+                $("#btnNotDipCim").attr("data-rutadocumento", response.notaDiplomaticaPdf);
+                $("#btnNotDipCim").attr("data-tipo", "Nota diplomática");
+                $("#btnNotDipCim").attr("onclick", "verDocumento(this)");
+
+                $("#fileFotoCim").val("");
+
+
+                fillSelectCalidadMigratoria("dllStatusCambio", response.idTipoCalidadMigratoriaSolicitada, "Seleccione", function () { });
+                $("#txtFechaInicioCim").prop("disabled", true);
+                $("#txtFechaFinCim").prop("disabled", true);
+                $("#dllCalidadCim").prop("disabled", true);
+
+                $("#modalModificarEmision").modal("show");
+            })
+            .catch(error => {
+                alertify.error(tituloAlert.seguridad, error.messages)
+            });
+
+    },
+ };
+
+
+ 

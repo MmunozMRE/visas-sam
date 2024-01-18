@@ -1,0 +1,33 @@
+﻿const API_URL = basePath.privilegiosApi;
+//$(function () { $("#btnSubmit").click(function () { loggin(); }); });
+function loggin(token) {
+    let request = {
+        userName: $("#userName").val(),
+        password: $("#password").val(),
+        tokenCaptcha: token
+    }
+    var result=servicePassport.autentificarExt(request, headersprivilegiosLogin)
+        .then(response => {
+
+            let userLogged = {
+                correo: response.correo,
+                rol: response.descripcionEmbajada,
+                usuario: response.nombreUsuario,
+                idUsuarioRol: response.idUsuarioRolStr,
+                codigoRol: response.codigoRol
+            }
+            passport.setJwtToken(response.jwToken);
+            passport.setJwtIdUserRol(response.idUsuarioRolStr);
+            passport.setJwtInformationUser(userLogged);
+       
+
+            alertify.success(tituloAlert.seguridad, `${response.message}`, (response) => {
+                setTimeout(function () { document.location.href = `${basePath.privilegiosWeb}Index`; }, 2500);
+            })
+        })
+        .catch(error => {
+            alertify.error(tituloAlert.seguridad, `${error.messages}`, () => { })
+        });
+
+     
+}

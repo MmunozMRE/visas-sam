@@ -1,0 +1,2171 @@
+﻿
+const API_URL = basePath.privilegiosApi;
+var documentosAdjuntos = [];
+var documentosAdjuntosEliminados = [];
+var documentoPdfElegido, _CURRENT_PAGE, _TOTAL_PAGES;
+var tipoListadoBuscar = 0;
+
+var origenConsulta = {
+    titular: 1,
+    titular_dependiente: 2,
+    titular_finalizacion: 3,
+    titular_actualizacion: 4,
+    dependiente: 5,
+}
+var tipoCalidad = {
+    prorroga: 1,
+    ordinario: 2,
+    cambio: 3
+}
+validarLogin(() => { });
+
+$(function () {
+    validarLogin((response) => {
+        if (response) {
+            fillSelectTipoSolicitud("dllTipoSolicitudFiltro", 0, "Todos", function () {
+                fillSelectSubtipoSolicitud("dllSubtipoSolitudFiltro", 0, "Todos", 0, function () {
+                    fillSelectEstadoSolicitud("dllEstadoSolicitudFiltro", 0, "Todos", 0, function () {
+                        listadoSolicitudes();
+                    });
+                });
+            });
+        }
+    });
+    $("#btnBuscar").click(function () { listadoSolicitudes(); });
+    $("#btnNoConforme").click(function () { conformidad(0); });
+    $("#btnConforme").click(function () { conformidad(1); });
+
+    $("#btnCancelarCMO").click(function () { $("#modalModificarOrdinario").modal("hide"); });
+    $("#btnRegistrarCalidadO").click(function () {
+        switch (parseInt($("#hcodigoAccion").val())) {
+
+            case tipoCalidad.cambio:
+                actualizarSolicitudCalidadCambio();
+                break;
+            case tipoCalidad.prorroga:
+                actualizarSolicitudCalidadProrroga();
+                break;
+            case tipoCalidad.ordinario:
+                actualizarSolicitudCalidadOrdinario();
+                break;
+        }
+        
+    });
+    $("#btnCerrarSeguimiento").click(function () { $("#modalSeguimiento").modal("hide"); });
+    $("#btnCerrarViewActualizacion").click(function () { $("#modalViewActualizacion").modal("hide"); });
+    $("#btnCerrarViewTitular").click(function () { $("#modalViewTitular").modal("hide"); });
+    $("#btnCerrarViewDep").click(function () { $("#modalViewDependiente").modal("hide"); });
+    $("#btnCerrarViewFinalizacion").click(function () { $("#modalViewFinalizacion").modal("hide"); });
+    $("#btnCancelarCim").click(function () { $("#modalModificarEmision").modal("hide"); });
+    $("#btnLimpiar").click(function () {
+        
+            fillSelectTipoSolicitud("dllTipoSolicitudFiltro", 0, "Todos", function () {
+                fillSelectSubtipoSolicitud("dllSubtipoSolitudFiltro", 0, "Todos", 0, function () {
+                    fillSelectEstadoSolicitud("dllEstadoSolicitudFiltro", 0, "Todos", 0, function () {
+                    });
+                });
+            });
+      
+        $("#txtCodigoSolFiltro").val("");
+        $("#txtFechaDesdeFiltro").val("");
+        $("#txtFechaHastaFiltro").val("");
+
+        $("#txtBeneficiarioSolFiltro").val("");
+    });
+    $("#dllTipoSolicitudFiltro").change(function () {
+        fillSelectSubtipoSolicitud("dllSubtipoSolitudFiltro", 0, "Todos", $("#dllTipoSolicitudFiltro").val(), function () { });
+        fillSelectEstadoSolicitud("dllEstadoSolicitudFiltro", 0, "Todos", $("#dllTipoSolicitudFiltro").val(), function () { });
+    });
+
+    $(".btnAcreditacion").click(function () { $("#mdlAcreditacion").modal("show"); });
+
+    $("#btnAcreditacionDependiente").click(function () {
+        configDependiente();
+        $("#mdlAcreditacionDependiente").modal("show");
+    });
+    $("#btnAcreditacionTitular").click(function () {
+        configTitular();
+        $("#mdlAcreditacionTitular").modal("show");
+    });
+    $("#btnFinalizarAcreditacion").click(function () {
+        configFinalizacion();
+        $("#mdlAcreditacionCancelada").modal("show");
+    });
+    $("#btnModificarAcreditacion").click(function () {
+        configModificacion();
+        $("#mdlAcreditacionModificar").modal("show");
+    });
+
+
+    $("#pdf-prev").click(function () {
+        if (_CURRENT_PAGE != 1) verPaginaPdf(documentoPdfElegido, --_CURRENT_PAGE);
+    });
+    $("#pdf-next").click(function () {
+        if (_CURRENT_PAGE != _TOTAL_PAGES) verPaginaPdf(documentoPdfElegido, ++_CURRENT_PAGE);
+    });
+
+    $("#btnRegistrarSolicitud").click(function () { actualizarSolicitudTitular(); });
+    $("#btnRegistrarSolicitudDep").click(function () { actualizarSolicitudDependiente(); });
+    $("#btnRegistrarSolicitudc").click(function () { actualizarSolicitudFinalizacion(); });
+    $("#btnRegistrarSolicitudM").click(function () { actualizarSolicitudModificacion(); });
+    $("#btnRegistrarCim").click(function () { actualizarSolicitudCarnet(); });
+
+    $("#btnAgregarAdjuntoDep").click(function () { agregarDocumentosGeneral("dllTipoDocumentoAdjuntoDep", "fileDocumentoAjuntoDep", "bodyDocumentosAdjuntosDep"); });
+    $("#btnAgregarAdjuntoc").click(function () { agregarDocumentosGeneral("dllTipoDocumentoAdjuntoc", "fileDocumentoAjuntoc", "bodyDocumentosAdjuntosc"); });
+    $("#btnAgregarAdjuntoM").click(function () { agregarDocumentosGeneral("dllTipoDocumentoAdjuntoM", "fileDocumentoAjuntoM", "bodyDocumentosAdjuntosM"); });
+    $("#btnAgregarAdjuntoO").click(function () { agregarDocumentosGeneral("dllTipoDocumentoAdjuntoO", "fileDocumentoAjuntoO", "bodyDocumentosAdjuntosO"); });
+    $("#btnAgregarAdjuntoCim").click(function () { agregarDocumentosGeneral("dllTipoDocumentoAdjuntoCim", "fileDocumentoAjuntoCim", "bodyDocumentosAdjuntosCim"); });
+    $("#btnAgregarAdjunto").click(function () {  agregarDocumentosGeneral("dllTipoDocumentoAdjunto", "fileDocumentoAjunto","bodyDocumentosAdjuntos"); });
+
+    $("#fileFotoAcreditado").change(function () { readImage(this, "imgFotoAcreditado"); });
+    $("#fileFotoAcreDep").change(function () { readImage(this, "imgFotoAcreDep"); });
+    $("#fileFotoFirma").change(function () { readImage(this, "imgFirmaCim"); });
+
+    $("#fileFotoCim").change(function () { readImage(this, "imgFotoAcreditadoCim"); });
+
+   
+    $('#mdlAcreditacionTitular').on('hidden.bs.modal', function (e) { limpiarFormularioGeneral(); });
+    $('#mdlAcreditacionDependiente').on('hidden.bs.modal', function (e) { limpiarFormularioGeneral(); });
+    $('#mdlAcreditacionCancelada').on('hidden.bs.modal', function (e) { limpiarFormularioGeneral(); });
+    $('#mdlAcreditacionModificar').on('hidden.bs.modal', function (e) { limpiarFormularioGeneral(); });
+   
+});
+
+
+function configTitular() {
+    limpiarFormularioGeneral();
+    $("#txtCargo").val("");
+    fillSelectTipoDocumento("dllTipoDocumento", 0, "Seleccione", function () { });
+    fillSelectEstadoCivil("dllEstadoCivil", 0, "Seleccione", function () { });
+    fillSelectNacionalidad("dllNacionalidadAnterior", 0, "Seleccione", function () { });
+    fillSelectNacionalidad("dllNacionalidadActual", 0, "Seleccione", function () { });
+    fillSelectStatus("dllStatus", 0, "Seleccione", function () { });
+    fillSelectCategoria("dllCategoria", 0, "Seleccione", function () { });
+    fillSelectClasificacionDocumento("dllTipoDocumentoAdjunto", 0, "Seleccione", function () { });
+}
+function configDependiente() {
+    limpiarFormularioGeneral();
+    $("#txtCargoTitular").val("");
+    fillSelectTipoDocumento("dllTipoDocumentoDep", 0, "Seleccione", function () { });
+    fillSelectEstadoCivil("dllEstadoCivilDep", 0, "Seleccione", function () { });
+    fillSelectNacionalidad("dllNacionalidadAnteriorDep", 0, "Seleccione", function () { });
+    fillSelectNacionalidad("dllNacionalidadActualDep", 0, "Seleccione", function () { });
+    fillSelectStatus("dllStatusTitular", 0, "Seleccione", function () { });
+    fillSelectStatus("dllStatusDependiente", 0, "Seleccione", function () { });
+    fillSelectCategoria("dllCategoriaTitular", 0, "Seleccione", function () { });
+    fillSelectClasificacionDocumento("dllTipoDocumentoAdjuntoDep", 0, "Seleccione", function () { });
+    fillSelectTipoParentesco("dllParentescoDep", 0, "Seleccione", function () { })
+}
+function configFinalizacion() {
+    limpiarFormularioGeneral();
+    $("#txtCargoc").val("");
+    fillSelectTipoDocumento("dllTipoDocumentoc", 0, "Seleccione", function () { });
+    fillSelectStatus("dllStatusc", 0, "Seleccione", function () { });
+    fillSelectCategoria("dllCategoriac", 0, "Seleccione", function () { });
+    fillSelectClasificacionDocumento("dllTipoDocumentoAdjuntoc", 0, "Seleccione", function () { });
+}
+function configModificacion() {
+    limpiarFormularioGeneral();
+    $("#txtCargoM").val("");
+    fillSelectTipoDocumento("dllTipoDocumentoM", 0, "Seleccione", function () { });
+    fillSelectEstadoCivil("dllEstadoCivilM", 0, "Seleccione", function () { });
+    fillSelectNacionalidad("dllNacionalidadAnteriorM", 0, "Seleccione", function () { });
+    fillSelectNacionalidad("dllNacionalidadActualM", 0, "Seleccione", function () { });
+    fillSelectStatus("dllStatusM", 0, "Seleccione", function () { });
+    fillSelectCategoria("dllCategoriaM", 0, "Seleccione", function () { });
+    fillSelectClasificacionDocumento("dllTipoDocumentoAdjuntoM", 0, "Seleccione", function () { });
+}
+
+
+function limpiarListadoPersonasAcreditadas() {
+    $("#txtNombresFiltro").val();
+    $("#txtApellidosFiltro").val();
+    $("#txtNumeroDocumentoFiltro").val();
+}
+function limpiarDocumentosAdjuntosGeneral() {
+    $("#dllTipoDocumentoAdjunto").val(0);
+    $("#fileDocumentoAjunto").val('');
+    $("#dllTipoDocumentoAdjuntoDep").val(0);
+    $("#fileDocumentoAjuntoDep").val('');
+    $("#dllTipoDocumentoAdjuntoc").val(0);
+    $("#fileDocumentoAjuntoc").val('');
+    $("#dllTipoDocumentoAdjuntoM").val(0);
+    $("#fileDocumentoAjuntoM").val('');
+    $("#dllTipoDocumentoAdjuntoO").val(0);
+    $("#fileDocumentoAjuntoO").val('');
+}
+
+function listadoSolicitudes() {
+    let request =
+    {
+        idTipoSolicitud: $("#dllTipoSolicitudFiltro").val(),
+        idSubtipoSocilitud: $("#dllSubtipoSolitudFiltro").val(),
+        fechaInicioInicio: $("#txtFechaDesdeFiltro").val(),
+        fechaInicioFin: $("#txtFechaHastaFiltro").val(),
+        idEstadoSolicitud: $("#dllEstadoSolicitudFiltro").val(),
+        beneficiario: $("#txtBeneficiarioSolFiltro").val(),
+        codigoSolicitud: $("#txtCodigoSolFiltro").val(),
+        usuarioLogueado: encodeURIComponent(passport.getIdUserRol()),
+        paginaActual: 0,
+        tamanioPagina: 0
+    };
+    $("#grid").DataTable().clear();
+    $('#grid').DataTable({
+        processing: true,
+        serverSide: true,
+
+        ajax: function (d, cb) {
+
+            request.draw = d.draw
+            request.paginaActual = ((d.start / d.length) + 1)
+            request.tamanioPagina = d.length
+
+            serviceSolicitud.getsolicitudPaginado(request, headersprivilegios)
+                .then(response => { cb(response) })
+                .catch(error => msgException('listadoSolicitudes', error));
+
+        },
+        language: {
+            search: "Búsqueda:",
+            lengthMenu: "Mostrar _MENU_ registros por página",
+            zeroRecords: "No se encontraron registros",
+            info: "Se encontraron _TOTAL_ resultados.",
+            infoEmpty: "No se encontraron registros"
+        },
+        responsive: true,
+        destroy: true,
+        bLengthChange: false,
+        bFilter: false,
+        bInfo: false,
+        columns: [
+            {
+                data: 'idSolicitud',
+                render: function (data, type, row, meta) {
+                    return meta.row + 1;
+                }
+            },
+            { data: 'codigoSolicitud' },
+            { data:'personaResponsable'},
+            { data: 'beneficiario' },
+            { data: 'tipoSolicitud' },
+            { data: 'subTipoSolicitud' },
+            { data: 'fechaSolicitud' },
+            {
+                data: 'estadoSolicitud',
+                render: function (data, type, row) {
+                    return estadoSpan(data, row.codigoEstadoSolicitud, parseInt(row.codigoTipoSolicitud), parseInt(row.codigoSubtipoSolicitud));
+                }
+            },
+            {
+                data: function (row) {
+                    let data = row.idSolicitud;
+                    var resultado = '';
+                    var funcionviewmdl = '';
+                    var funtionmodimdl = '';
+
+                    switch (parseInt(row.codigoTipoSolicitud)) {
+
+                        case K_TIPO_SOL.ACREDITACION:
+                            switch (parseInt(row.codigoSubtipoSolicitud)) {
+                                case K_SUBTIPO_SOL_ACREDITADO.TITULAR:
+                                    funcionviewmdl = 'acreditacionController.verSolicitudTitular(this)';
+                                    funtionmodimdl = 'acreditacionController.verSolicitudTitularModificar(this)';
+                                    break;
+                                case K_SUBTIPO_SOL_ACREDITADO.DEPENDIENTE:
+                                    funcionviewmdl = 'acreditacionController.verSolicitudDependiente(this)';
+                                    funtionmodimdl = 'acreditacionController.verSolicitudDependienteModificar(this)';
+                                    break;
+                                case K_SUBTIPO_SOL_ACREDITADO.FINALIZACION:
+                                    funcionviewmdl = 'acreditacionController.verSolicitudFinalizar(this)';
+                                    funtionmodimdl = 'acreditacionController.verSolicitudFinalizarModificar(this)';
+                                    break;
+                                case K_SUBTIPO_SOL_ACREDITADO.ACTUALIZAR:
+                                    funcionviewmdl = 'acreditacionController.verSolicitudActualizar(this)';
+                                    funtionmodimdl = 'acreditacionController.verSolicitudActualizarModificar(this)';
+                                    break;
+                                default:
+                                    break;
+                            }
+
+                            switch ((row.codigoEstadoSolicitud)) {
+                                case K_ESTADOS_SOL_ACREDITADO.INICIADO:
+                                    resultado += '<button title="Ver solicitud" data-codigosolicitud="' + data + '" onclick="' + funcionviewmdl + '" class="btn btn-sm btn-outline-dark"><i class="bi-search"></i></button> ';
+                                    resultado += '<button title="Ver Expediente de solicitud PDF" data-tiposol="' + row.codigoTipoSolicitud + '" data-codigosolicitud="' + data + '" onclick="verExpediente(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-file-earmark-pdf-fill"></i></button> ';
+                                    resultado += '<button title="Seguimiento de solicitud" data-codigosolicitud="' + data + '" onclick="verLog(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-chat-left-text-fill"></i></button> ';
+                                    resultado += '<button title="Eliminar solicitud" data-codigosolicitud="' + data + '" onclick="eliminar(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-trash3-fill"></i></button> ';
+
+                                    break;
+
+                                case K_ESTADOS_SOL_ACREDITADO.OBSERVADO:
+                                    resultado += '<button title="Ver solicitud" data-codigosolicitud="' + data + '" onclick="' + funcionviewmdl + '"class="btn btn-sm btn-outline-dark"><i class="bi-search"></i></button> ';
+                                    resultado += '<button title="Ver Expediente de solicitud PDF" data-tiposol="' + row.codigoTipoSolicitud + '" data-codigosolicitud="' + data + '" onclick="verExpediente(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-file-earmark-pdf-fill"></i></button> ';
+                                    resultado += '<button title="Seguimiento de solicitud" data-codigosolicitud="' + data + '" onclick="verLog(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-chat-left-text-fill"></i></button> ';
+                                    resultado += '<button title="Editar solicitud" data-codigosolicitud="' + data + '" onclick="' + funtionmodimdl + '"class="btn btn-sm btn-outline-dark"><i class="bi bi-pencil-square"></i></button> ';
+
+                                    break;
+
+                                case K_ESTADOS_SOL_ACREDITADO.APROBADO:
+                                    resultado += '<button title="Ver solicitud" data-codigosolicitud="' + data + '" onclick="' + funcionviewmdl + '" class="btn btn-sm btn-outline-dark"><i class="bi-search"></i></button> ';
+                                    resultado += '<button title="Ver Expediente de solicitud PDF" data-tiposol="' + row.codigoTipoSolicitud + '" data-codigosolicitud="' + data + '" onclick="verExpediente(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-file-earmark-pdf-fill"></i></button> ';
+                                    resultado += '<button title="Seguimiento de solicitud" data-codigosolicitud="' + data + '" onclick="verLog(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-chat-left-text-fill"></i></button> ';
+                                   
+                                    break;
+
+                                case K_ESTADOS_SOL_ACREDITADO.DE_BAJA:
+                                    resultado += '<button title="Ver solicitud" data-codigosolicitud="' + data + '" onclick="' + funcionviewmdl + '" class="btn btn-sm btn-outline-dark"><i class="bi-search"></i></button> ';
+                                    resultado += '<button title="Seguimiento de solicitud" data-codigosolicitud="' + data + '" onclick="verLog(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-chat-left-text-fill"></i></button> ';
+
+                                    break;
+                                default: resultado += '<button title="Ver solicitud" data-codigosolicitud="' + data + '" onclick="' + funcionviewmdl + '" class="btn btn-sm btn-outline-dark"><i class="bi-search"></i></button> ';
+                                    resultado += '<button title="Ver Expediente de solicitud PDF" data-tiposol="' + row.codigoTipoSolicitud + '" data-codigosolicitud="' + data + '" onclick="verExpediente(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-file-earmark-pdf-fill"></i></button> ';
+                                    
+                                    resultado += '<button title="Seguimiento de solicitud" data-codigosolicitud="' + data + '" onclick="verLog(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-chat-left-text-fill"></i></button> ';
+                                    break;
+                            }
+                            break;
+                        case K_TIPO_SOL.CALIDAD_MIGRATORIA:
+                            switch (parseInt(row.codigoSubtipoSolicitud)) {
+                                case K_SUBTIPO_SOL_CALIDAD_MIGRATORIA.ORDINARIO:
+                                    funcionviewmdl = 'calidadController.verSolicitudOrdinario(this)';
+                                    funtionmodimdl = 'calidadController.verSolicitudOrdinarioModificar(this)';
+                                    break;
+                                case K_SUBTIPO_SOL_CALIDAD_MIGRATORIA.EXTRAORDINARIO:
+                                    funcionviewmdl = 'calidadController.verSolicitudExtraordinario(this)';
+                                    funtionmodimdl = 'calidadController.verSolicitudExtraordinarioModificar(this)';
+                                    break;
+                                case K_SUBTIPO_SOL_CALIDAD_MIGRATORIA.CAMBIO:
+                                    funcionviewmdl = 'calidadController.verSolicitudCambio(this)';
+                                    funtionmodimdl = 'calidadController.verSolicitudCambioModificar(this)';
+                                    break;
+                                case K_SUBTIPO_SOL_CALIDAD_MIGRATORIA.PROROGA:
+                                    funcionviewmdl = 'calidadController.verSolicitudProrroga(this)';
+                                    funtionmodimdl = 'calidadController.verSolicitudProrrogaModificar(this)';
+                                    break;
+                                default:
+                                    break;
+                            }
+                            switch ((row.codigoEstadoSolicitud)) {
+                                case K_ESTADOS_SOL_CALIDAD_MIGRATORIA.INICIADO:
+                                    resultado += '<button title="Ver solicitud" data-codigosolicitud="' + data + '" onclick="' + funcionviewmdl + '" class="btn btn-sm btn-outline-dark"><i class="bi-search"></i></button> ';
+                                    resultado += '<button title="Ver Expediente de solicitud PDF" data-tiposol="' + row.codigoTipoSolicitud + '" data-codigosolicitud="' + data + '" onclick="verExpediente(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-file-earmark-pdf-fill"></i></button> ';
+                                    resultado += '<button title="Seguimiento de solicitud" data-codigosolicitud="' + data + '" onclick="verLog(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-chat-left-text-fill"></i></button> ';
+                                    resultado += '<button title="Eliminar solicitud" data-codigosolicitud="' + data + '" onclick="eliminar(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-trash3-fill"></i></button> ';
+
+                                    break;
+
+                                case K_ESTADOS_SOL_CALIDAD_MIGRATORIA.OBSERVADO:
+                                    resultado += '<button title="Ver solicitud" data-codigosolicitud="' + data + '" onclick="' + funcionviewmdl + '"class="btn btn-sm btn-outline-dark"><i class="bi-search"></i></button> ';
+                                    resultado += '<button title="Ver Expediente de solicitud PDF" data-tiposol="' + row.codigoTipoSolicitud + '" data-codigosolicitud="' + data + '" onclick="verExpediente(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-file-earmark-pdf-fill"></i></button> ';
+                                    resultado += '<button title="Seguimiento de solicitud" data-codigosolicitud="' + data + '" onclick="verLog(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-chat-left-text-fill"></i></button> ';
+                                    resultado += '<button title="Editar solicitud" data-codigosolicitud="' + data + '" onclick="' + funtionmodimdl + '"class="btn btn-sm btn-outline-dark"><i class="bi bi-pencil-square"></i></button> ';
+
+                                    break;
+
+                                case K_ESTADOS_SOL_CALIDAD_MIGRATORIA.APROBADO:
+                                    resultado += '<button title="Ver solicitud" data-codigosolicitud="' + data + '" onclick="' + funcionviewmdl + '" class="btn btn-sm btn-outline-dark"><i class="bi-search"></i></button> ';
+                                    resultado += '<button title="Ver Expediente de solicitud PDF" data-tiposol="' + row.codigoTipoSolicitud + '" data-codigosolicitud="' + data + '" onclick="verExpediente(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-file-earmark-pdf-fill"></i></button> ';
+                                    resultado += '<button title="Seguimiento de solicitud" data-codigosolicitud="' + data + '" onclick="verLog(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-chat-left-text-fill"></i></button> ';
+
+                                    break;
+
+                                case K_ESTADOS_SOL_CALIDAD_MIGRATORIA.DE_BAJA:
+                                    resultado += '<button title="Ver solicitud" data-codigosolicitud="' + data + '" onclick="' + funcionviewmdl + '" class="btn btn-sm btn-outline-dark"><i class="bi-search"></i></button> ';
+                                    resultado += '<button title="Seguimiento de solicitud" data-codigosolicitud="' + data + '" onclick="verLog(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-chat-left-text-fill"></i></button> ';
+
+                                    break;
+
+                                default: resultado += '<button title="Ver solicitud" data-codigosolicitud="' + data + '" onclick="' + funcionviewmdl + '" class="btn btn-sm btn-outline-dark"><i class="bi-search"></i></button> ';
+                                    resultado += '<button title="Ver Expediente de solicitud PDF" data-tiposol="' + row.codigoTipoSolicitud + '" data-codigosolicitud="' + data + '" onclick="verExpediente(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-file-earmark-pdf-fill"></i></button> ';
+
+                                    resultado += '<button title="Seguimiento de solicitud" data-codigosolicitud="' + data + '" onclick="verLog(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-chat-left-text-fill"></i></button> ';
+                                    break;
+                            }
+                            break;
+                        case K_TIPO_SOL.CARNET_IDENTIDAD:
+                            switch (parseInt(row.codigoSubtipoSolicitud)) {
+                                case K_SUBTIPO_SOL_CARNET_IDENTIDAD.EMISION:
+                                    funcionviewmdl = 'carnetController.verSolicitudEmision(this)';
+                                    funtionmodimdl = 'carnetController.verSolicitudEmisionModificar(this)';
+                                    break;
+                                case K_SUBTIPO_SOL_CARNET_IDENTIDAD.RENOVACION:
+                                    funcionviewmdl = 'carnetController.verSolicitudEmision(this)';
+                                    funtionmodimdl = 'carnetController.verSolicitudEmisionModificar(this)';
+                                    break;
+                                case K_SUBTIPO_SOL_CARNET_IDENTIDAD.DUPLICADO:
+                                    funcionviewmdl = 'carnetController.verSolicitudEmision(this)';
+                                    funtionmodimdl = 'carnetController.verSolicitudEmisionModificar(this)';
+                                    break;
+                                default:
+                                    break;
+                            }
+                            switch ((row.codigoEstadoSolicitud)) {
+                                case K_ESTADOS_SOL_CARNET_IDENTIDAD.INICIADO:
+                                    resultado += '<button title="Ver solicitud" data-codigosolicitud="' + data + '" onclick="' + funcionviewmdl + '" class="btn btn-sm btn-outline-dark"><i class="bi-search"></i></button> ';
+                                    resultado += '<button title="Ver Expediente de solicitud PDF" data-tiposol="' + row.codigoTipoSolicitud + '" data-codigosolicitud="' + data + '" onclick="verExpediente(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-file-earmark-pdf-fill"></i></button> ';
+                                    resultado += '<button title="Seguimiento de solicitud" data-codigosolicitud="' + data + '" onclick="verLog(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-chat-left-text-fill"></i></button> ';
+                                    resultado += '<button title="Eliminar solicitud" data-codigosolicitud="' + data + '" onclick="eliminar(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-trash3-fill"></i></button> ';
+
+                                    break;
+
+                                case K_ESTADOS_SOL_CARNET_IDENTIDAD.OBSERVADO:
+                                    resultado += '<button title="Ver solicitud" data-codigosolicitud="' + data + '" onclick="' + funcionviewmdl + '"class="btn btn-sm btn-outline-dark"><i class="bi-search"></i></button> ';
+                                    resultado += '<button title="Ver Expediente de solicitud PDF" data-tiposol="' + row.codigoTipoSolicitud + '" data-codigosolicitud="' + data + '" onclick="verExpediente(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-file-earmark-pdf-fill"></i></button> ';
+                                    resultado += '<button title="Seguimiento de solicitud" data-codigosolicitud="' + data + '" onclick="verLog(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-chat-left-text-fill"></i></button> ';
+                                    resultado += '<button title="Editar solicitud" data-codigosolicitud="' + data + '" onclick="' + funtionmodimdl + '"class="btn btn-sm btn-outline-dark"><i class="bi bi-pencil-square"></i></button> ';
+
+                                    break;
+
+
+                                case K_ESTADOS_SOL_CARNET_IDENTIDAD.DE_BAJA:
+                                    resultado += '<button title="Ver solicitud" data-codigosolicitud="' + data + '" onclick="' + funcionviewmdl + '" class="btn btn-sm btn-outline-dark"><i class="bi-search"></i></button> ';
+                                    resultado += '<button title="Seguimiento de solicitud" data-codigosolicitud="' + data + '" onclick="verLog(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-chat-left-text-fill"></i></button> ';
+
+                                    break;
+
+                                default: resultado += '<button title="Ver solicitud" data-codigosolicitud="' + data + '" onclick="' + funcionviewmdl + '" class="btn btn-sm btn-outline-dark"><i class="bi-search"></i></button> ';
+                                    resultado += '<button title="Ver Expediente de solicitud PDF" data-tiposol="' + row.codigoTipoSolicitud + '" data-codigosolicitud="' + data + '" onclick="verExpediente(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-file-earmark-pdf-fill"></i></button> ';
+
+                                    resultado += '<button title="Seguimiento de solicitud" data-codigosolicitud="' + data + '" onclick="verLog(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-chat-left-text-fill"></i></button> ';
+                                    break;
+                            }
+                            break;
+                        case K_TIPO_SOL.IMPORTACION_VEHICULOS:
+                            switch (parseInt(row.codigoSubtipoSolicitud)) {
+                                case K_SUBTIPO_SOL_VEHICULAR.ADMISION:
+                                    funcionviewmdl = 'vehicularController.verSolicitudImportacion(this)';
+                                    funtionmodimdl = 'vehicularController.verSolicitudImportacion(this)';
+                                    switch (parseInt(row.codigoEstadoSolicitud)) {
+                                        case K_ESTADOS_SOL_VEHICULAR_ADM.INICIADO:
+                                            resultado += '<button title="Ver solicitud" data-codigosolicitud="' + data + '" onclick="' + funcionviewmdl + '" class="btn btn-sm btn-outline-dark"><i class="bi-search"></i></button> ';
+                                              resultado += '<button title="Ver Expediente de solicitud PDF" data-tiposol="' + row.codigoTipoSolicitud + '" data-codigosolicitud="' + data + '" onclick="verExpediente(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-file-earmark-pdf-fill"></i></button> ';
+                                            resultado += '<button title="Seguimiento de solicitud" data-codigosolicitud="' + data + '" onclick="verLog(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-chat-left-text-fill"></i></button> ';
+                                            resultado += '<button title="Eliminar solicitud" data-codigosolicitud="' + data + '" onclick="eliminar(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-trash3-fill"></i></button> ';
+
+                                            break;
+
+                                        case K_ESTADOS_SOL_VEHICULAR_ADM.FIRMADO_PRIVILEGIOS:
+                                            resultado += '<button title="Ver solicitud" data-codigosolicitud="' + data + '" onclick="' + funcionviewmdl + '"class="btn btn-sm btn-outline-dark"><i class="bi-search"></i></button> ';
+                                            resultado += '<button title="Ver Expediente de solicitud PDF" data-tiposol="' + row.codigoTipoSolicitud + '" data-codigosolicitud="' + data + '" onclick="verExpediente(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-file-earmark-pdf-fill"></i></button> ';
+                                            resultado += '<button title="Seguimiento de solicitud" data-codigosolicitud="' + data + '" onclick="verLog(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-chat-left-text-fill"></i></button> ';
+
+                                            break;
+
+                                        case K_ESTADOS_SOL_VEHICULAR_ADM.MESA_PARTES:
+                                            resultado += '<button title="Ver solicitud" data-codigosolicitud="' + data + '" onclick="' + funcionviewmdl + '"class="btn btn-sm btn-outline-dark"><i class="bi-search"></i></button> ';
+                                               resultado += '<button title="Ver Expediente de solicitud PDF" data-tiposol="' + row.codigoTipoSolicitud + '" data-codigosolicitud="' + data + '" onclick="verExpediente(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-file-earmark-pdf-fill"></i></button> ';
+                                            resultado += '<button title="Seguimiento de solicitud" data-codigosolicitud="' + data + '" onclick="verLog(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-chat-left-text-fill"></i></button> ';
+
+                                            break;
+                                        case K_ESTADOS_SOL_VEHICULAR_ADM.DE_BAJA:
+                                            resultado += '<button title="Ver solicitud" data-codigosolicitud="' + data + '" onclick="' + funcionviewmdl + '" class="btn btn-sm btn-outline-dark"><i class="bi-search"></i></button> ';
+                                            resultado += '<button title="Seguimiento de solicitud" data-codigosolicitud="' + data + '" onclick="verLog(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-chat-left-text-fill"></i></button> ';
+
+                                            break;
+
+                                        default: resultado += '<button title="Ver solicitud" data-codigosolicitud="' + data + '" onclick="' + funcionviewmdl + '" class="btn btn-sm btn-outline-dark"><i class="bi-search"></i></button> ';
+                                               resultado += '<button title="Ver Expediente de solicitud PDF" data-tiposol="' + row.codigoTipoSolicitud + '" data-codigosolicitud="' + data + '" onclick="verExpediente(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-file-earmark-pdf-fill"></i></button> ';
+
+                                            resultado += '<button title="Seguimiento de solicitud" data-codigosolicitud="' + data + '" onclick="verLog(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-chat-left-text-fill"></i></button> ';
+                                            break;
+                                    }
+                                break;
+                                case K_SUBTIPO_SOL_VEHICULAR.IMPORTACION:
+                                    funcionviewmdl = 'vehicularController.verSolicitudImportacion(this)';
+                                  
+                                    switch (parseInt(row.codigoEstadoSolicitud)) {
+                                        case K_ESTADOS_SOL_VEHICULAR_IMP.INICIADO:
+                                            resultado += '<button title="Ver solicitud" data-codigosolicitud="' + data + '" onclick="' + funcionviewmdl + '" class="btn btn-sm btn-outline-dark"><i class="bi-search"></i></button> ';
+                                              resultado += '<button title="Ver Expediente de solicitud PDF" data-tiposol="' + row.codigoTipoSolicitud + '" data-codigosolicitud="' + data + '" onclick="verExpediente(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-file-earmark-pdf-fill"></i></button> ';
+                                            resultado += '<button title="Seguimiento de solicitud" data-codigosolicitud="' + data + '" onclick="verLog(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-chat-left-text-fill"></i></button> ';
+                                            resultado += '<button title="Eliminar solicitud" data-codigosolicitud="' + data + '" onclick="eliminar(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-trash3-fill"></i></button> ';
+
+                                            break;
+
+                                        case K_ESTADOS_SOL_VEHICULAR_IMP.FIRMADO_PRIVILEGIOS:
+                                            resultado += '<button title="Ver solicitud" data-codigosolicitud="' + data + '" onclick="' + funcionviewmdl + '"class="btn btn-sm btn-outline-dark"><i class="bi-search"></i></button> ';
+                                                  resultado += '<button title="Ver Expediente de solicitud PDF" data-tiposol="' + row.codigoTipoSolicitud + '" data-codigosolicitud="' + data + '" onclick="verExpediente(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-file-earmark-pdf-fill"></i></button> ';
+                                            resultado += '<button title="Seguimiento de solicitud" data-codigosolicitud="' + data + '" onclick="verLog(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-chat-left-text-fill"></i></button> ';
+
+                                            break;
+                                       
+                                        case K_ESTADOS_SOL_VEHICULAR_IMP.MESA_PARTES_RES_LIB:
+                                            resultado += '<button title="Ver solicitud" data-codigosolicitud="' + data + '" onclick="' + funcionviewmdl + '"class="btn btn-sm btn-outline-dark"><i class="bi-search"></i></button> ';
+                                                resultado += '<button title="Ver Expediente de solicitud PDF" data-tiposol="' + row.codigoTipoSolicitud + '" data-codigosolicitud="' + data + '" onclick="verExpediente(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-file-earmark-pdf-fill"></i></button> ';
+                                            resultado += '<button title="Seguimiento de solicitud" data-codigosolicitud="' + data + '" onclick="verLog(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-chat-left-text-fill"></i></button> ';
+
+                                            break;
+                                        case K_ESTADOS_SOL_VEHICULAR_IMP.DE_BAJA:
+                                            resultado += '<button title="Ver solicitud" data-codigosolicitud="' + data + '" onclick="' + funcionviewmdl + '" class="btn btn-sm btn-outline-dark"><i class="bi-search"></i></button> ';
+                                            resultado += '<button title="Seguimiento de solicitud" data-codigosolicitud="' + data + '" onclick="verLog(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-chat-left-text-fill"></i></button> ';
+
+                                           break;
+                                        case K_ESTADOS_SOL_VEHICULAR_IMP.ENTREGADO_RES_ADU:
+                                                resultado += '<button title="Ver solicitud" data-codigosolicitud="' + data + '" onclick="' + funcionviewmdl + '" class="btn btn-sm btn-outline-dark"><i class="bi-search"></i></button> ';
+                                                resultado += '<button title="Seguimiento de solicitud" data-codigosolicitud="' + data + '" onclick="verLog(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-chat-left-text-fill"></i></button> ';
+                                                resultado += '<button title="Documentacion aduanera de la solicitud" data-codestado="'+row.codigoEstadoSolicitud+'" data-codigosolicitud="' + data + '" onclick="verDocumentosAdu(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-folder2"></i></button> ';
+
+                                            break;
+                                        case K_ESTADOS_SOL_VEHICULAR_IMP.RECIBIDO_CON_ADU:
+                                                resultado += '<button title="Ver solicitud" data-codigosolicitud="' + data + '" onclick="' + funcionviewmdl + '" class="btn btn-sm btn-outline-dark"><i class="bi-search"></i></button> ';
+                                                resultado += '<button title="Ver Expediente de solicitud PDF" data-tiposol="' + row.codigoTipoSolicitud + '" data-codigosolicitud="' + data + '" onclick="verExpediente(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-file-earmark-pdf-fill"></i></button> ';
+
+                                                resultado += '<button title="Seguimiento de solicitud" data-codigosolicitud="' + data + '" onclick="verLog(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-chat-left-text-fill"></i></button> ';
+                                                resultado += '<button title="Documentacion aduanera de la solicitud" data-codestado="' + row.codigoEstadoSolicitud + '" data-codigosolicitud="' + data + '" onclick="verDocumentosAdu(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-folder2"></i></button> ';
+
+                                            break;
+
+                                        case K_ESTADOS_SOL_VEHICULAR_IMP.APROBADO:
+                                                resultado += '<button title="Ver solicitud" data-codigosolicitud="' + data + '" onclick="' + funcionviewmdl + '" class="btn btn-sm btn-outline-dark"><i class="bi-search"></i></button> ';
+                                                resultado += '<button title="Ver Expediente de solicitud PDF" data-tiposol="' + row.codigoTipoSolicitud + '" data-codigosolicitud="' + data + '" onclick="verExpediente(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-file-earmark-pdf-fill"></i></button> ';
+                                           
+                                                resultado += '<button title="Seguimiento de solicitud" data-codigosolicitud="' + data + '" onclick="verLog(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-chat-left-text-fill"></i></button> ';
+                                            break;
+                                        case K_ESTADOS_SOL_VEHICULAR_IMP.MESA_PARTES_RES_ADU:
+                                            resultado += '<button title="Ver solicitud" data-codigosolicitud="' + data + '" onclick="' + funcionviewmdl + '" class="btn btn-sm btn-outline-dark"><i class="bi-search"></i></button> ';
+                                            resultado += '<button title="Ver Expediente de solicitud PDF" data-tiposol="' + row.codigoTipoSolicitud + '" data-codigosolicitud="' + data + '" onclick="verExpediente(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-file-earmark-pdf-fill"></i></button> ';
+
+                                            resultado += '<button title="Seguimiento de solicitud" data-codigosolicitud="' + data + '" onclick="verLog(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-chat-left-text-fill"></i></button> ';
+
+                                            break;
+                                        default:
+                                            resultado += '<button title="Ver solicitud" data-codigosolicitud="' + data + '" onclick="' + funcionviewmdl + '" class="btn btn-sm btn-outline-dark"><i class="bi-search"></i></button> ';
+                                            resultado += '<button title="Ver Expediente de solicitud PDF" data-tiposol="' + row.codigoTipoSolicitud + '" data-codigosolicitud="' + data + '" onclick="verExpediente(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-file-earmark-pdf-fill"></i></button> ';
+
+                                            resultado += '<button title="Seguimiento de solicitud" data-codigosolicitud="' + data + '" onclick="verLog(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-chat-left-text-fill"></i></button> ';
+
+                                            break;
+                                    }
+                                break;
+                               
+                            }
+                            break;
+                        case K_TIPO_SOL.TARJETA_PROPIEDAD_PLACAS:
+                            switch (row.codigoSubtipoSolicitud) {
+                                case K_SUBTIPO_SOL_TARJETA_PROPIEDAD.EMISION:
+                                    funcionviewmdl = 'tarjetaPropiedadController.verSolicitudEmision(this)';
+                                    break;
+                                case K_SUBTIPO_SOL_TARJETA_PROPIEDAD.CAMBIO:
+                                    funcionviewmdl = 'tarjetaPropiedadController.verSolicitudCambio(this)';
+                                    break;
+                                case K_SUBTIPO_SOL_TARJETA_PROPIEDAD.DUPLICADO_PLACA:
+                                    funcionviewmdl = 'tarjetaPropiedadController.verSolicitudDuplicado(this)';
+                                    break;
+                                case K_SUBTIPO_SOL_TARJETA_PROPIEDAD.DUPLICADO_TARJETA:
+                                    funcionviewmdl = 'tarjetaPropiedadController.verSolicitudDuplicadoTarjeta(this)';
+                                    break;
+                                case K_SUBTIPO_SOL_TARJETA_PROPIEDAD.DEVOLUCION_PLACAS:
+                                    funcionviewmdl = 'tarjetaPropiedadController.verSolicitudDevolucionPlaca(this)';
+                                    break;
+                            }
+
+                            switch (row.codigoSubtipoSolicitud) {
+
+                                case K_SUBTIPO_SOL_TARJETA_PROPIEDAD.EMISION:
+                                    switch ((row.codigoEstadoSolicitud)) {
+                                        case K_ESTADOS_SOL_TARJETA_PROPIEDAD_TP.INICIADO:
+                                            resultado += '<button title="Ver solicitud" data-codigosolicitud="' + data + '" onclick="' + funcionviewmdl + '" class="btn btn-sm btn-outline-dark"><i class="bi-search"></i></button> ';
+                                            resultado += '<button title="Ver Expediente de solicitud PDF" data-tiposol="' + row.codigoTipoSolicitud + '" data-codigosolicitud="' + data + '" onclick="verExpediente(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-file-earmark-pdf-fill"></i></button> ';
+                                            resultado += '<button title="Seguimiento de solicitud" data-codigosolicitud="' + data + '" onclick="verLog(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-chat-left-text-fill"></i></button> ';
+                                            resultado += '<button title="Eliminar solicitud" data-codigosolicitud="' + data + '" onclick="eliminar(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-trash3-fill"></i></button> ';
+                                            break;
+                                        case K_ESTADOS_SOL_TARJETA_PROPIEDAD_TP.APROBADO:
+                                            resultado += '<button title="Ver solicitud" data-codigosolicitud="' + data + '" onclick="' + funcionviewmdl + '"class="btn btn-sm btn-outline-dark"><i class="bi-search"></i></button> ';
+                                            
+                                           resultado += '<button title="Ver Expediente de solicitud PDF" data-tiposol="' + row.codigoTipoSolicitud + '" data-codigosolicitud="' + data + '" onclick="verExpediente(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-file-earmark-pdf-fill"></i></button> ';
+                                            resultado += '<button title="Seguimiento de solicitud" data-codigosolicitud="' + data + '" onclick="verLog(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-chat-left-text-fill"></i></button> ';
+                                            break;
+                                        case K_ESTADOS_SOL_TARJETA_PROPIEDAD_TP.CON_CUR:
+                                            resultado += '<button title="Ver solicitud" data-codigosolicitud="' + data + '" onclick="' + funcionviewmdl + '"class="btn btn-sm btn-outline-dark"><i class="bi-search"></i></button> ';
+                                          
+                                           resultado += '<button title="Ver Expediente de solicitud PDF" data-tiposol="' + row.codigoTipoSolicitud + '" data-codigosolicitud="' + data + '" onclick="verExpediente(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-file-earmark-pdf-fill"></i></button> ';
+                                            resultado += '<button title="Seguimiento de solicitud" data-codigosolicitud="' + data + '" onclick="verLog(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-chat-left-text-fill"></i></button> ';
+                                            break;
+
+                                        case K_ESTADOS_SOL_TARJETA_PROPIEDAD_TP.PAGO_RECEPCIONADO:
+                                            resultado += '<button title="Ver solicitud" data-codigosolicitud="' + data + '" onclick="' + funcionviewmdl + '" class="btn btn-sm btn-outline-dark"><i class="bi-search"></i></button> ';
+                                           
+                                            resultado += '<button title="Ver Expediente de solicitud PDF" data-tiposol="' + row.codigoTipoSolicitud + '" data-codigosolicitud="' + data + '" onclick="verExpediente(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-file-earmark-pdf-fill"></i></button> ';
+                                            resultado += '<button title="Seguimiento de solicitud" data-codigosolicitud="' + data + '" onclick="verLog(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-chat-left-text-fill"></i></button> ';
+                                            break;
+
+                                        case K_ESTADOS_SOL_TARJETA_PROPIEDAD_TP.BAJA:
+                                            resultado += '<button title="Ver solicitud" data-codigosolicitud="' + data + '" onclick="' + funcionviewmdl + '" class="btn btn-sm btn-outline-dark"><i class="bi-search"></i></button> ';
+                                            resultado += '<button title="Seguimiento de solicitud" data-codigosolicitud="' + data + '" onclick="verLog(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-chat-left-text-fill"></i></button> ';
+                                            break;
+
+                                        case K_ESTADOS_SOL_TARJETA_PROPIEDAD_TP.MESA_PARTES:
+                                            resultado += '<button title="Ver solicitud" data-codigosolicitud="' + data + '" onclick="' + funcionviewmdl + '" class="btn btn-sm btn-outline-dark"><i class="bi-search"></i></button> ';
+                                           
+                                            resultado += '<button title="Seguimiento de solicitud" data-codigosolicitud="' + data + '" onclick="verLog(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-chat-left-text-fill"></i></button> ';
+                                            break;
+
+                                        default: resultado += '<button title="Ver solicitud" data-codigosolicitud="' + data + '" onclick="' + funcionviewmdl + '" class="btn btn-sm btn-outline-dark"><i class="bi-search"></i></button> ';
+                                              resultado += '<button title="Ver Expediente de solicitud PDF" data-tiposol="' + row.codigoTipoSolicitud + '" data-codigosolicitud="' + data + '" onclick="verExpediente(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-file-earmark-pdf-fill"></i></button> ';
+
+                                            resultado += '<button title="Seguimiento de solicitud" data-codigosolicitud="' + data + '" onclick="verLog(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-chat-left-text-fill"></i></button> ';
+                                            break;
+                                    }
+                                    break;
+                                case K_SUBTIPO_SOL_TARJETA_PROPIEDAD.CAMBIO:
+                                    switch ((row.codigoEstadoSolicitud)) {
+                                        case K_ESTADOS_SOL_TARJETA_PROPIEDAD_TP.INICIADO:
+                                            resultado += '<button title="Ver solicitud" data-codigosolicitud="' + data + '" onclick="' + funcionviewmdl + '" class="btn btn-sm btn-outline-dark"><i class="bi-search"></i></button> ';
+                                            resultado += '<button title="Ver Expediente de solicitud PDF" data-tiposol="' + row.codigoTipoSolicitud + '" data-codigosolicitud="' + data + '" onclick="verExpediente(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-file-earmark-pdf-fill"></i></button> ';
+                                            resultado += '<button title="Seguimiento de solicitud" data-codigosolicitud="' + data + '" onclick="verLog(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-chat-left-text-fill"></i></button> ';
+                                            resultado += '<button title="Eliminar solicitud" data-codigosolicitud="' + data + '" onclick="eliminar(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-trash3-fill"></i></button> ';
+                                            break;
+                                        case K_ESTADOS_SOL_TARJETA_PROPIEDAD_TP.APROBADO:
+                                            resultado += '<button title="Ver solicitud" data-codigosolicitud="' + data + '" onclick="' + funcionviewmdl + '"class="btn btn-sm btn-outline-dark"><i class="bi-search"></i></button> ';
+
+                                            resultado += '<button title="Ver Expediente de solicitud PDF" data-tiposol="' + row.codigoTipoSolicitud + '" data-codigosolicitud="' + data + '" onclick="verExpediente(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-file-earmark-pdf-fill"></i></button> ';
+                                            resultado += '<button title="Seguimiento de solicitud" data-codigosolicitud="' + data + '" onclick="verLog(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-chat-left-text-fill"></i></button> ';
+                                            break;
+                                        case K_ESTADOS_SOL_TARJETA_PROPIEDAD_TP.CON_CUR:
+                                            resultado += '<button title="Ver solicitud" data-codigosolicitud="' + data + '" onclick="' + funcionviewmdl + '"class="btn btn-sm btn-outline-dark"><i class="bi-search"></i></button> ';
+
+                                            resultado += '<button title="Ver Expediente de solicitud PDF" data-tiposol="' + row.codigoTipoSolicitud + '" data-codigosolicitud="' + data + '" onclick="verExpediente(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-file-earmark-pdf-fill"></i></button> ';
+                                            resultado += '<button title="Seguimiento de solicitud" data-codigosolicitud="' + data + '" onclick="verLog(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-chat-left-text-fill"></i></button> ';
+                                            break;
+
+                                        case K_ESTADOS_SOL_TARJETA_PROPIEDAD_TP.PAGO_RECEPCIONADO:
+                                            resultado += '<button title="Ver solicitud" data-codigosolicitud="' + data + '" onclick="' + funcionviewmdl + '" class="btn btn-sm btn-outline-dark"><i class="bi-search"></i></button> ';
+
+                                            resultado += '<button title="Ver Expediente de solicitud PDF" data-tiposol="' + row.codigoTipoSolicitud + '" data-codigosolicitud="' + data + '" onclick="verExpediente(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-file-earmark-pdf-fill"></i></button> ';
+                                            resultado += '<button title="Seguimiento de solicitud" data-codigosolicitud="' + data + '" onclick="verLog(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-chat-left-text-fill"></i></button> ';
+                                            break;
+
+                                        case K_ESTADOS_SOL_TARJETA_PROPIEDAD_TP.BAJA:
+                                            resultado += '<button title="Ver solicitud" data-codigosolicitud="' + data + '" onclick="' + funcionviewmdl + '" class="btn btn-sm btn-outline-dark"><i class="bi-search"></i></button> ';
+                                            resultado += '<button title="Seguimiento de solicitud" data-codigosolicitud="' + data + '" onclick="verLog(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-chat-left-text-fill"></i></button> ';
+                                            break;
+
+                                        case K_ESTADOS_SOL_TARJETA_PROPIEDAD_TP.MESA_PARTES:
+                                            resultado += '<button title="Ver solicitud" data-codigosolicitud="' + data + '" onclick="' + funcionviewmdl + '" class="btn btn-sm btn-outline-dark"><i class="bi-search"></i></button> ';
+
+                                            resultado += '<button title="Seguimiento de solicitud" data-codigosolicitud="' + data + '" onclick="verLog(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-chat-left-text-fill"></i></button> ';
+                                            break;
+
+                                        default: resultado += '<button title="Ver solicitud" data-codigosolicitud="' + data + '" onclick="' + funcionviewmdl + '" class="btn btn-sm btn-outline-dark"><i class="bi-search"></i></button> ';
+                                            resultado += '<button title="Ver Expediente de solicitud PDF" data-tiposol="' + row.codigoTipoSolicitud + '" data-codigosolicitud="' + data + '" onclick="verExpediente(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-file-earmark-pdf-fill"></i></button> ';
+
+                                            resultado += '<button title="Seguimiento de solicitud" data-codigosolicitud="' + data + '" onclick="verLog(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-chat-left-text-fill"></i></button> ';
+                                            break;
+                                    }
+                                    break;
+                                case K_SUBTIPO_SOL_TARJETA_PROPIEDAD.DUPLICADO_PLACA:
+                                    switch ((row.codigoEstadoSolicitud)) {
+                                        case K_ESTADOS_SOL_TARJETA_PROPIEDAD_TP.INICIADO:
+                                            resultado += '<button title="Ver solicitud" data-codigosolicitud="' + data + '" onclick="' + funcionviewmdl + '" class="btn btn-sm btn-outline-dark"><i class="bi-search"></i></button> ';
+                                            resultado += '<button title="Ver Expediente de solicitud PDF" data-tiposol="' + row.codigoTipoSolicitud + '" data-codigosolicitud="' + data + '" onclick="verExpediente(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-file-earmark-pdf-fill"></i></button> ';
+                                            resultado += '<button title="Seguimiento de solicitud" data-codigosolicitud="' + data + '" onclick="verLog(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-chat-left-text-fill"></i></button> ';
+                                            resultado += '<button title="Eliminar solicitud" data-codigosolicitud="' + data + '" onclick="eliminar(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-trash3-fill"></i></button> ';
+                                            break;
+                                        case K_ESTADOS_SOL_TARJETA_PROPIEDAD_TP.APROBADO:
+                                            resultado += '<button title="Ver solicitud" data-codigosolicitud="' + data + '" onclick="' + funcionviewmdl + '"class="btn btn-sm btn-outline-dark"><i class="bi-search"></i></button> ';
+
+                                            resultado += '<button title="Ver Expediente de solicitud PDF" data-tiposol="' + row.codigoTipoSolicitud + '" data-codigosolicitud="' + data + '" onclick="verExpediente(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-file-earmark-pdf-fill"></i></button> ';
+                                            resultado += '<button title="Seguimiento de solicitud" data-codigosolicitud="' + data + '" onclick="verLog(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-chat-left-text-fill"></i></button> ';
+                                            break;
+                                        case K_ESTADOS_SOL_TARJETA_PROPIEDAD_TP.CON_CUR:
+                                            resultado += '<button title="Ver solicitud" data-codigosolicitud="' + data + '" onclick="' + funcionviewmdl + '"class="btn btn-sm btn-outline-dark"><i class="bi-search"></i></button> ';
+
+                                            resultado += '<button title="Ver Expediente de solicitud PDF" data-tiposol="' + row.codigoTipoSolicitud + '" data-codigosolicitud="' + data + '" onclick="verExpediente(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-file-earmark-pdf-fill"></i></button> ';
+                                            resultado += '<button title="Seguimiento de solicitud" data-codigosolicitud="' + data + '" onclick="verLog(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-chat-left-text-fill"></i></button> ';
+                                            break;
+
+                                        case K_ESTADOS_SOL_TARJETA_PROPIEDAD_TP.PAGO_RECEPCIONADO:
+                                            resultado += '<button title="Ver solicitud" data-codigosolicitud="' + data + '" onclick="' + funcionviewmdl + '" class="btn btn-sm btn-outline-dark"><i class="bi-search"></i></button> ';
+
+                                            resultado += '<button title="Ver Expediente de solicitud PDF" data-tiposol="' + row.codigoTipoSolicitud + '" data-codigosolicitud="' + data + '" onclick="verExpediente(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-file-earmark-pdf-fill"></i></button> ';
+                                            resultado += '<button title="Seguimiento de solicitud" data-codigosolicitud="' + data + '" onclick="verLog(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-chat-left-text-fill"></i></button> ';
+                                            break;
+
+                                        case K_ESTADOS_SOL_TARJETA_PROPIEDAD_TP.BAJA:
+                                            resultado += '<button title="Ver solicitud" data-codigosolicitud="' + data + '" onclick="' + funcionviewmdl + '" class="btn btn-sm btn-outline-dark"><i class="bi-search"></i></button> ';
+                                            resultado += '<button title="Seguimiento de solicitud" data-codigosolicitud="' + data + '" onclick="verLog(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-chat-left-text-fill"></i></button> ';
+                                            break;
+
+                                        case K_ESTADOS_SOL_TARJETA_PROPIEDAD_TP.MESA_PARTES:
+                                            resultado += '<button title="Ver solicitud" data-codigosolicitud="' + data + '" onclick="' + funcionviewmdl + '" class="btn btn-sm btn-outline-dark"><i class="bi-search"></i></button> ';
+
+                                            resultado += '<button title="Seguimiento de solicitud" data-codigosolicitud="' + data + '" onclick="verLog(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-chat-left-text-fill"></i></button> ';
+                                            break;
+
+                                        default: resultado += '<button title="Ver solicitud" data-codigosolicitud="' + data + '" onclick="' + funcionviewmdl + '" class="btn btn-sm btn-outline-dark"><i class="bi-search"></i></button> ';
+                                            resultado += '<button title="Ver Expediente de solicitud PDF" data-tiposol="' + row.codigoTipoSolicitud + '" data-codigosolicitud="' + data + '" onclick="verExpediente(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-file-earmark-pdf-fill"></i></button> ';
+
+                                            resultado += '<button title="Seguimiento de solicitud" data-codigosolicitud="' + data + '" onclick="verLog(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-chat-left-text-fill"></i></button> ';
+                                            break;
+                                    }
+                                    break;
+                                case K_SUBTIPO_SOL_TARJETA_PROPIEDAD.DUPLICADO_TARJETA:
+                                    switch ((row.codigoEstadoSolicitud)) {
+                                        case K_ESTADOS_SOL_TARJETA_PROPIEDAD.INICIADO:
+                                            resultado += '<button title="Ver solicitud" data-codigosolicitud="' + data + '" onclick="' + funcionviewmdl + '" class="btn btn-sm btn-outline-dark"><i class="bi-search"></i></button> ';
+                                            resultado += '<button title="Ver Expediente de solicitud PDF" data-tiposol="' + row.codigoTipoSolicitud + '" data-codigosolicitud="' + data + '" onclick="verExpediente(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-file-earmark-pdf-fill"></i></button> ';
+                                            resultado += '<button title="Seguimiento de solicitud" data-codigosolicitud="' + data + '" onclick="verLog(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-chat-left-text-fill"></i></button> ';
+                                            resultado += '<button title="Eliminar solicitud" data-codigosolicitud="' + data + '" onclick="eliminar(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-trash3-fill"></i></button> ';
+                                            break;
+                                        case K_ESTADOS_SOL_TARJETA_PROPIEDAD.APROBADO:
+                                            resultado += '<button title="Ver solicitud" data-codigosolicitud="' + data + '" onclick="' + funcionviewmdl + '"class="btn btn-sm btn-outline-dark"><i class="bi-search"></i></button> ';
+
+                                            resultado += '<button title="Ver Expediente de solicitud PDF" data-tiposol="' + row.codigoTipoSolicitud + '" data-codigosolicitud="' + data + '" onclick="verExpediente(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-file-earmark-pdf-fill"></i></button> ';
+                                            resultado += '<button title="Seguimiento de solicitud" data-codigosolicitud="' + data + '" onclick="verLog(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-chat-left-text-fill"></i></button> ';
+                                            break;
+                                        case K_ESTADOS_SOL_TARJETA_PROPIEDAD_TP.BAJA:
+                                            resultado += '<button title="Ver solicitud" data-codigosolicitud="' + data + '" onclick="' + funcionviewmdl + '" class="btn btn-sm btn-outline-dark"><i class="bi-search"></i></button> ';
+                                            resultado += '<button title="Seguimiento de solicitud" data-codigosolicitud="' + data + '" onclick="verLog(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-chat-left-text-fill"></i></button> ';
+                                            break;
+
+                                        case K_ESTADOS_SOL_TARJETA_PROPIEDAD_TP.MESA_PARTES:
+                                            resultado += '<button title="Ver solicitud" data-codigosolicitud="' + data + '" onclick="' + funcionviewmdl + '" class="btn btn-sm btn-outline-dark"><i class="bi-search"></i></button> ';
+                                            resultado += '<button title="Ver Expediente de solicitud PDF" data-tiposol="' + row.codigoTipoSolicitud + '" data-codigosolicitud="' + data + '" onclick="verExpediente(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-file-earmark-pdf-fill"></i></button> ';
+
+                                            resultado += '<button title="Seguimiento de solicitud" data-codigosolicitud="' + data + '" onclick="verLog(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-chat-left-text-fill"></i></button> ';
+                                            break;
+
+                                        default: resultado += '<button title="Ver solicitud" data-codigosolicitud="' + data + '" onclick="' + funcionviewmdl + '" class="btn btn-sm btn-outline-dark"><i class="bi-search"></i></button> ';
+                                            resultado += '<button title="Ver Expediente de solicitud PDF" data-tiposol="' + row.codigoTipoSolicitud + '" data-codigosolicitud="' + data + '" onclick="verExpediente(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-file-earmark-pdf-fill"></i></button> ';
+
+                                            resultado += '<button title="Seguimiento de solicitud" data-codigosolicitud="' + data + '" onclick="verLog(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-chat-left-text-fill"></i></button> ';
+                                            break;
+                                    }
+                                    break;
+                                case K_SUBTIPO_SOL_TARJETA_PROPIEDAD.DEVOLUCION_PLACAS:
+                                    switch ((row.codigoEstadoSolicitud)) {
+                                        case K_ESTADOS_SOL_TP_DEVOLUCION_PLA.INICIADO:
+                                            resultado += '<button title="Ver solicitud" data-codigosolicitud="' + data + '" onclick="' + funcionviewmdl + '" class="btn btn-sm btn-outline-dark"><i class="bi-search"></i></button> ';
+                                            resultado += '<button title="Ver Expediente de solicitud PDF" data-tiposol="' + row.codigoTipoSolicitud + '" data-codigosolicitud="' + data + '" onclick="verExpediente(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-file-earmark-pdf-fill"></i></button> ';
+                                            resultado += '<button title="Seguimiento de solicitud" data-codigosolicitud="' + data + '" onclick="verLog(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-chat-left-text-fill"></i></button> ';
+                                            resultado += '<button title="Eliminar solicitud" data-codigosolicitud="' + data + '" onclick="eliminar(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-trash3-fill"></i></button> ';
+                                            break;
+                                        case K_ESTADOS_SOL_TP_DEVOLUCION_PLA.APROBADO:
+                                            resultado += '<button title="Ver solicitud" data-codigosolicitud="' + data + '" onclick="' + funcionviewmdl + '"class="btn btn-sm btn-outline-dark"><i class="bi-search"></i></button> ';
+
+                                            resultado += '<button title="Ver Expediente de solicitud PDF" data-tiposol="' + row.codigoTipoSolicitud + '" data-codigosolicitud="' + data + '" onclick="verExpediente(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-file-earmark-pdf-fill"></i></button> ';
+                                            resultado += '<button title="Seguimiento de solicitud" data-codigosolicitud="' + data + '" onclick="verLog(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-chat-left-text-fill"></i></button> ';
+                                            break;
+                                        case K_ESTADOS_SOL_TP_DEVOLUCION_PLA.BAJA:
+                                            resultado += '<button title="Ver solicitud" data-codigosolicitud="' + data + '" onclick="' + funcionviewmdl + '" class="btn btn-sm btn-outline-dark"><i class="bi-search"></i></button> ';
+                                            resultado += '<button title="Seguimiento de solicitud" data-codigosolicitud="' + data + '" onclick="verLog(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-chat-left-text-fill"></i></button> ';
+                                            break;
+
+                                        case K_ESTADOS_SOL_TP_DEVOLUCION_PLA.MESA_PARTES:
+                                            resultado += '<button title="Ver solicitud" data-codigosolicitud="' + data + '" onclick="' + funcionviewmdl + '" class="btn btn-sm btn-outline-dark"><i class="bi-search"></i></button> ';
+                                            resultado += '<button title="Ver Expediente de solicitud PDF" data-tiposol="' + row.codigoTipoSolicitud + '" data-codigosolicitud="' + data + '" onclick="verExpediente(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-file-earmark-pdf-fill"></i></button> ';
+
+                                            resultado += '<button title="Seguimiento de solicitud" data-codigosolicitud="' + data + '" onclick="verLog(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-chat-left-text-fill"></i></button> ';
+                                            break;
+
+                                        default: resultado += '<button title="Ver solicitud" data-codigosolicitud="' + data + '" onclick="' + funcionviewmdl + '" class="btn btn-sm btn-outline-dark"><i class="bi-search"></i></button> ';
+                                            resultado += '<button title="Ver Expediente de solicitud PDF" data-tiposol="' + row.codigoTipoSolicitud + '" data-codigosolicitud="' + data + '" onclick="verExpediente(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-file-earmark-pdf-fill"></i></button> ';
+
+                                            resultado += '<button title="Seguimiento de solicitud" data-codigosolicitud="' + data + '" onclick="verLog(this)" class="btn btn-sm btn-outline-dark"><i class="bi bi-chat-left-text-fill"></i></button> ';
+                                            break;
+                                    }
+                                    break;
+                            }
+                            break;
+                    }
+                
+             
+                    return resultado;
+                }
+            }
+
+        ]
+    });
+}
+
+
+function estadoSpan(estado, codigoEstadoSolicitud,codigoTipoSolicitud,subTipoSolicitud=0) {
+    var cssBadge = '';
+    switch (codigoTipoSolicitud) {
+        case K_TIPO_SOL.ACREDITACION:
+            switch (codigoEstadoSolicitud) {
+                case K_ESTADOS_SOL_ACREDITADO.INICIADO:
+                    cssBadge = "text-bg-warning";
+                    break;
+                case K_ESTADOS_SOL_ACREDITADO.OBSERVADO:
+                    cssBadge = "text-bg-danger";
+                    break;
+                case K_ESTADOS_SOL_ACREDITADO.APROBADO:
+                    cssBadge = "text-bg-primary";
+                    break;
+                case K_ESTADOS_SOL_ACREDITADO.DE_BAJA:
+                    cssBadge = "text-bg-secondary";
+                    break;
+                case K_ESTADOS_SOL_ACREDITADO.SUBSANADO:
+                    cssBadge = "text-bg-info";
+                    break;
+                case K_ESTADOS_SOL_ACREDITADO.ENTREGADO:
+                    cssBadge = "text-bg-success";
+                    break;
+                default:
+                    cssBadge = "text-bg-light";
+                    break;
+            }
+            break;
+        case K_TIPO_SOL.CALIDAD_MIGRATORIA:
+            switch (codigoEstadoSolicitud) {
+                case K_ESTADOS_SOL_CALIDAD_MIGRATORIA.INICIADO:
+                    cssBadge = "text-bg-warning";
+                    break;
+                case K_ESTADOS_SOL_CALIDAD_MIGRATORIA.OBSERVADO:
+                    cssBadge = "text-bg-danger";
+                    break;
+                case K_ESTADOS_SOL_CALIDAD_MIGRATORIA.APROBADO:
+                    cssBadge = "text-bg-primary";
+                    break;
+                case K_ESTADOS_SOL_CALIDAD_MIGRATORIA.DE_BAJA:
+                    cssBadge = "text-bg-secondary";
+                    break;
+                case K_ESTADOS_SOL_CALIDAD_MIGRATORIA.SUBSANADO:
+                    cssBadge = "text-bg-info";
+                    break;
+                case K_ESTADOS_SOL_CALIDAD_MIGRATORIA.PENDIENTE_FIRMA:
+                    cssBadge = "text-bg-dark";
+                    break;
+                case K_ESTADOS_SOL_CALIDAD_MIGRATORIA.ENVIADO_MESA:
+                    cssBadge = "text-bg-info";
+                    break;
+                case K_ESTADOS_SOL_CALIDAD_MIGRATORIA.ENTREGADO:
+                    cssBadge = "text-bg-success";
+                    break;
+                default:
+                    cssBadge = "text-bg-light";
+                    break;
+            }
+            break;
+        case K_TIPO_SOL.CARNET_IDENTIDAD:
+            switch (parseInt(codigoEstadoSolicitud)) {
+                case K_ESTADOS_SOL_CARNET_IDENTIDAD.INICIADO:
+                    cssBadge = "text-bg-warning";
+                    break;
+                case K_ESTADOS_SOL_CARNET_IDENTIDAD.OBSERVADO:
+                    cssBadge = "text-bg-danger";
+                    break;
+                case K_ESTADOS_SOL_CARNET_IDENTIDAD.IMPRESO:
+                    cssBadge = "text-bg-primary";
+                    break;
+
+                case K_ESTADOS_SOL_CARNET_IDENTIDAD.DE_BAJA:
+                    cssBadge = "text-bg-secondary";
+                    break;
+                case K_ESTADOS_SOL_CARNET_IDENTIDAD.SUBSANADO:
+                    cssBadge = "text-bg-info";
+                    break;
+                case K_ESTADOS_SOL_CARNET_IDENTIDAD.PENDIENTE_IMPRESION:
+                    cssBadge = "text-bg-dark";
+                    break;
+                case K_ESTADOS_SOL_CARNET_IDENTIDAD.ENTREGADO:
+                    cssBadge = "text-bg-success";
+                    break;
+                case K_ESTADOS_SOL_CARNET_IDENTIDAD.MESA_DE_PARTES:
+                    cssBadge = "text-bg-info";
+                    break;
+                case K_ESTADOS_SOL_CARNET_IDENTIDAD.ENTREGAGO:
+                    cssBadge = "text-bg-success";
+                    break;
+                default:
+                    cssBadge = "text-bg-light";
+                    break;
+
+            }
+            break;
+        case K_TIPO_SOL.IMPORTACION_VEHICULOS:
+            switch (subTipoSolicitud) {
+                case K_SUBTIPO_SOL_VEHICULAR.ADMISION:
+                    switch (parseInt(codigoEstadoSolicitud)) {
+                        case K_ESTADOS_SOL_VEHICULAR_ADM.INICIADO:
+                            cssBadge = "text-bg-warning";
+                            break;
+                        case K_ESTADOS_SOL_VEHICULAR_ADM.APROBADO:
+                            cssBadge = "text-bg-primary";
+                            break;
+                        case K_ESTADOS_SOL_VEHICULAR_ADM.DE_BAJA:
+                            cssBadge = "text-bg-secondary";
+                            break;
+                        case K_ESTADOS_SOL_VEHICULAR_ADM.RECHAZADO:
+                            cssBadge = "text-bg-danger";
+                            break;
+                        case K_ESTADOS_SOL_VEHICULAR_ADM.MESA_PARTES:
+                            cssBadge = "text-bg-info";
+                            break;
+                        case K_ESTADOS_SOL_VEHICULAR_ADM.FIRMADO_PRIVILEGIOS:
+                            cssBadge = "text-bg-dark";
+                            break;
+                        case K_ESTADOS_SOL_VEHICULAR_ADM.ENTREGADO:
+                            cssBadge = "text-bg-success";
+                            break;
+                        default:
+                            cssBadge = "text-bg-light";
+                            break;
+                    }
+                    break;
+                case K_SUBTIPO_SOL_VEHICULAR.IMPORTACION:
+                    switch (parseInt(codigoEstadoSolicitud)) {
+                        case K_ESTADOS_SOL_VEHICULAR_IMP.INICIADO:
+                            cssBadge = "text-bg-warning";
+                            break;
+                        case K_ESTADOS_SOL_VEHICULAR_IMP.APROBADO:
+                            cssBadge = "text-bg-primary";
+                            break;
+                        case K_ESTADOS_SOL_VEHICULAR_IMP.DE_BAJA:
+                            cssBadge = "text-bg-secondary";
+                            break;
+                        case K_ESTADOS_SOL_VEHICULAR_IMP.MESA_PARTES_RES_LIB:
+                            cssBadge = "text-bg-info";
+                            break;
+                        case K_ESTADOS_SOL_VEHICULAR_IMP.FIRMADO_PRIVILEGIOS:
+                            cssBadge = "text-bg-dark";
+                            break;
+                        case K_ESTADOS_SOL_VEHICULAR_IMP.ENTREGADO_RES_LIB:
+                            cssBadge = "text-bg-success";
+                            break;
+                        case K_ESTADOS_SOL_VEHICULAR_IMP.CON_RES_ADUANERA:
+                            cssBadge = "text-bg-dark";
+                            break;
+                        case K_ESTADOS_SOL_VEHICULAR_IMP.MESA_PARTES_RES_ADU:
+                            cssBadge = "text-bg-info";
+                            break;
+                        case K_ESTADOS_SOL_VEHICULAR_IMP.ENTREGADO_RES_ADU:
+                            cssBadge = "text-bg-success";
+                            break;
+                        case K_ESTADOS_SOL_VEHICULAR_IMP.RECIBIDO_CON_ADU:
+                            cssBadge = "text-bg-dark";
+                            break;
+                        case K_ESTADOS_SOL_VEHICULAR_IMP.RECIBIDO_NO_CONFORME:
+                            cssBadge = "text-bg-danger";
+                            break;
+                        default:
+                            cssBadge = "text-bg-light";
+                            break;
+                    }
+                    break;
+            }
+            break;
+        case K_TIPO_SOL.TARJETA_PROPIEDAD_PLACAS:
+            switch (codigoSubTipoSolicitud) {
+                case K_SUBTIPO_SOL_TARJETA_PROPIEDAD.EMISION:
+                    switch (parseInt(codigoEstadoSolicitud)) {
+                        case K_ESTADOS_SOL_TARJETA_PROPIEDAD_TP.INICIADO:
+                            cssBadge = "text-bg-warning";
+                            break;
+                        case K_ESTADOS_SOL_TARJETA_PROPIEDAD_TP.APROBADO:
+                            cssBadge = "text-bg-primary";
+                            break;
+                        case K_ESTADOS_SOL_TARJETA_PROPIEDAD_TP.CON_CUR:
+                            cssBadge = "text-bg-dark";
+                            break;
+                        case K_ESTADOS_SOL_TARJETA_PROPIEDAD_TP.PAGO_RECEPCIONADO:
+                            cssBadge = "text-bg-dark";
+                            break;
+                        case K_ESTADOS_SOL_TARJETA_PROPIEDAD_TP.CON_TARJETA_IMPRESA:
+                            cssBadge = "text-bg-primary";
+                            break;
+                        case K_ESTADOS_SOL_TARJETA_PROPIEDAD_TP.CON_PLACA_RECEPCIONADA:
+                            cssBadge = "text-bg-dark";
+                            break;
+                        case K_ESTADOS_SOL_TARJETA_PROPIEDAD_TP.MESA_PARTES:
+                            cssBadge = "text-bg-info";
+                            break;
+                        case K_ESTADOS_SOL_TARJETA_PROPIEDAD_TP.ENTREGADO:
+                            cssBadge = "text-bg-success";
+                            break;
+                        case K_ESTADOS_SOL_TARJETA_PROPIEDAD_TP.BAJA:
+                            cssBadge = "text-bg-secondary";
+                            break;
+                        default:
+                            cssBadge = "text-bg-light";
+                            break;
+                    }
+
+                    break;
+                case K_SUBTIPO_SOL_TARJETA_PROPIEDAD.DUPLICADO_PLACA:
+                    switch (parseInt(codigoEstadoSolicitud)) {
+                        case K_ESTADOS_SOL_TARJETA_PROPIEDAD_TP.INICIADO:
+                            cssBadge = "text-bg-warning";
+                            break;
+                        case K_ESTADOS_SOL_TARJETA_PROPIEDAD_TP.APROBADO:
+                            cssBadge = "text-bg-primary";
+                            break;
+                        case K_ESTADOS_SOL_TARJETA_PROPIEDAD_TP.CON_CUR:
+                            cssBadge = "text-bg-dark";
+                            break;
+                        case K_ESTADOS_SOL_TARJETA_PROPIEDAD_TP.PAGO_RECEPCIONADO:
+                            cssBadge = "text-bg-dark";
+                            break;
+                        case K_ESTADOS_SOL_TARJETA_PROPIEDAD_TP.CON_TARJETA_IMPRESA:
+                            cssBadge = "text-bg-primary";
+                            break;
+                        case K_ESTADOS_SOL_TARJETA_PROPIEDAD_TP.CON_PLACA_RECEPCIONADA:
+                            cssBadge = "text-bg-dark";
+                            break;
+                        case K_ESTADOS_SOL_TARJETA_PROPIEDAD_TP.MESA_PARTES:
+                            cssBadge = "text-bg-info";
+                            break;
+                        case K_ESTADOS_SOL_TARJETA_PROPIEDAD_TP.ENTREGADO:
+                            cssBadge = "text-bg-success";
+                            break;
+                        case K_ESTADOS_SOL_TARJETA_PROPIEDAD_TP.BAJA:
+                            cssBadge = "text-bg-secondary";
+                            break;
+                        default:
+                            cssBadge = "text-bg-light";
+                            break;
+                    }
+
+                    break;
+                case K_SUBTIPO_SOL_TARJETA_PROPIEDAD.CAMBIO:
+                    switch (parseInt(codigoEstadoSolicitud)) {
+                        case K_ESTADOS_SOL_TARJETA_PROPIEDAD_TP.INICIADO:
+                            cssBadge = "text-bg-warning";
+                            break;
+                        case K_ESTADOS_SOL_TARJETA_PROPIEDAD_TP.APROBADO:
+                            cssBadge = "text-bg-primary";
+                            break;
+                        case K_ESTADOS_SOL_TARJETA_PROPIEDAD_TP.CON_CUR:
+                            cssBadge = "text-bg-dark";
+                            break;
+                        case K_ESTADOS_SOL_TARJETA_PROPIEDAD_TP.PAGO_RECEPCIONADO:
+                            cssBadge = "text-bg-dark";
+                            break;
+                        case K_ESTADOS_SOL_TARJETA_PROPIEDAD_TP.CON_TARJETA_IMPRESA:
+                            cssBadge = "text-bg-primary";
+                            break;
+                        case K_ESTADOS_SOL_TARJETA_PROPIEDAD_TP.CON_PLACA_RECEPCIONADA:
+                            cssBadge = "text-bg-dark";
+                            break;
+                        case K_ESTADOS_SOL_TARJETA_PROPIEDAD_TP.MESA_PARTES:
+                            cssBadge = "text-bg-info";
+                            break;
+                        case K_ESTADOS_SOL_TARJETA_PROPIEDAD_TP.ENTREGADO:
+                            cssBadge = "text-bg-success";
+                            break;
+                        case K_ESTADOS_SOL_TARJETA_PROPIEDAD_TP.BAJA:
+                            cssBadge = "text-bg-secondary";
+                            break;
+                        default:
+                            cssBadge = "text-bg-light";
+                            break;
+                    }
+
+                    break;
+                case K_SUBTIPO_SOL_TARJETA_PROPIEDAD.DUPLICADO_TARJETA:
+                    switch (parseInt(codigoEstadoSolicitud)) {
+                        case K_ESTADOS_SOL_TARJETA_PROPIEDAD.INICIADO:
+                            cssBadge = "text-bg-warning";
+                            break;
+                        case K_ESTADOS_SOL_TARJETA_PROPIEDAD.APROBADO:
+                            cssBadge = "text-bg-primary";
+                            break;
+                        case K_ESTADOS_SOL_TARJETA_PROPIEDAD.CON_TARJETA_IMPRESA:
+                            cssBadge = "text-bg-dark";
+                            break;
+                        case K_ESTADOS_SOL_TARJETA_PROPIEDAD.MESA_PARTES:
+                            cssBadge = "text-bg-info";
+                            break;
+                        case K_ESTADOS_SOL_TARJETA_PROPIEDAD.ENTREGADO:
+                            cssBadge = "text-bg-success";
+                            break;
+                        case K_ESTADOS_SOL_TARJETA_PROPIEDAD.BAJA:
+                            cssBadge = "text-bg-secondary";
+                            break;
+                        default:
+                            cssBadge = "text-bg-light";
+                            break;
+                    }
+
+                    break;
+                case K_SUBTIPO_SOL_TARJETA_PROPIEDAD.DEVOLUCION_PLACAS:
+                    switch (parseInt(codigoEstadoSolicitud)) {
+                        case K_ESTADOS_SOL_TP_DEVOLUCION_PLA.INICIADO:
+                            cssBadge = "text-bg-warning";
+                            break;
+                        case K_ESTADOS_SOL_TP_DEVOLUCION_PLA.APROBADO:
+                            cssBadge = "text-bg-primary";
+                            break;
+                        case K_ESTADOS_SOL_TP_DEVOLUCION_PLA.MESA_PARTES:
+                            cssBadge = "text-bg-info";
+                            break;
+                        case K_ESTADOS_SOL_TP_DEVOLUCION_PLA.ENTREGADO:
+                            cssBadge = "text-bg-success";
+                            break;
+                        case K_ESTADOS_SOL_TP_DEVOLUCION_PLA.BAJA:
+                            cssBadge = "text-bg-secondary";
+                            break;
+                        default:
+                            cssBadge = "text-bg-light";
+                            break;
+                    }
+
+                    break;
+            }
+            break;
+    }
+   
+    return `<span class="badge ${cssBadge}">${estado}</span>`;
+}
+
+
+function actualizarSolicitudTitular() {
+    
+    alertify.confirm("Aviso", "¿Esta seguro de actualizar la solicitud?", "question", (result) => {
+        if (result.isConfirmed) {
+            var fileNotaDiplo = null;
+            var imgFoto = null;
+            if ($("#fileFotoAcreditado")[0] != null) {
+                imgFoto = $("#fileFotoAcreditado")[0].files[0];
+            }
+
+            if ($("#fileFotoAcreditado")[0] != undefined) {
+                fileNotaDiplo = $("#fileNotadiplomatica")[0].files[0];
+            }
+            var formData = new FormData();
+
+            formData.append("notaDiplomaticaNumero", $("#txtNotaDiplomatica").val());//1
+            formData.append("idEstatus", parseInt($("#dllStatus").val())); //1
+
+            formData.append("idNacionalidadActual", parseInt($("#dllNacionalidadActual").val())); // 1
+            formData.append("idNacionalidadAnterior", parseInt($("#dllNacionalidadAnterior").val()));
+            formData.append("idEstadoCivil", parseInt($("#dllEstadoCivil").val())); //1
+            formData.append("idTipoDocumento", parseInt($("#dllTipoDocumento").val()));
+
+            formData.append("idSolicitud", $("#hidSolTit").val());
+    
+            formData.append("apellidoPaterno", $("#txtApellidoPaternoAcreditacion").val());
+
+            formData.append("apellidoMaterno", $("#txtApellidoMaternoAcreditacion").val());
+
+            formData.append("nombres", $("#txtNombresAcreditacion").val());
+            formData.append("numeroDocumento", $("#txtNumeroDocumento").val());
+            formData.append("fechaNacimiento", $("#txtFechaNacimiento").val());
+            formData.append("domicilioPeru", $("#txtDireccionPeru").val());
+            formData.append("domicilioExterior", '');
+            formData.append("fonoExterior", '');
+            formData.append("fonoPeru", $("#txtTelefono").val());
+            formData.append("funcionarioAtencion", '');
+            formData.append("fechaInicioFunciones", $("#txtFechaInicio").val());
+
+            formData.append("imagenFoto", imgFoto );
+            formData.append("notaDiplomaticaPdf", fileNotaDiplo);
+
+            formData.append("idCategoria", parseInt($("#dllCategoria").val()));
+            formData.append("cargo", $("#txtCargo").val());
+            documentosAdjuntos.forEach(function (archivoAdjunto, index) {
+                formData.append("documentosAdjuntos[" + index + "].idDocumentoAdjunto", archivoAdjunto.idDocumentoAdjunto);
+                formData.append("documentosAdjuntos[" + index + "].idTipoDocumento", archivoAdjunto.idTipoDocumento);
+                formData.append("documentosAdjuntos[" + index + "].rutaDocumento", archivoAdjunto.documento);
+            });
+            documentosAdjuntosEliminados.forEach(function (archivoAdjunto, index) {
+                formData.append("documentosAdjuntosEliminados[" + index + "].idDocumentoAdjunto", archivoAdjunto.idDocumentoAdjunto);
+            });
+            var sexo = '';
+            if ($('#radioFTit').is(':checked')) {
+                sexo = 'F';
+            }
+            if ($("#radioMTit").is(':checked')) {
+                sexo = 'M';
+            }
+            formData.append("sexo", sexo);
+            
+            $.ajax({
+                url: `${API_URL}${metodoSolicitudAcreditacion.route}/subsanartitular`,
+                type: 'PUT',
+                data: formData,
+                cache: false,
+                contentType: false,
+                processData: false,
+                beforeSend: function (request) {
+                    request.setRequestHeader("X-Auditoria", passport.getIdUserRol());
+                    request.setRequestHeader("Authorization", "Bearer " + passport.getJwtToken());
+                },
+                success: function (response) {
+
+                    if (response.result > 0) {
+                       
+                        $("#mdlAcreditacionTitular").modal("hide");
+                        alertify.success(tituloAlert.seguridad, response.message, () => { });
+                        listadoSolicitudes();
+                    } else {
+                        alertify.error(tituloAlert.seguridad, response.message, () => { });
+                        // console.log("entroooo else");
+                    }
+                }, error: function (jqXHR, textStatus, errorThrown) {
+                    msgException('actualizarSolicitudTitular', jqXHR.responseJSON);
+                    // console.log("entroooo jqXHR");
+                }
+
+            });
+        }
+    });
+}
+function actualizarSolicitudDependiente() {
+
+    alertify.confirm("Aviso", "¿Esta seguro de subsanar la solicitud?", "question", (result) => {
+        if (result.isConfirmed) {
+            var fileNotaDiplo = null;
+            if ($("#fileNotaDiplomaticaDep")[0] != undefined) {
+                fileNotaDiplo = $("#fileNotaDiplomaticaDep")[0].files[0];
+            }
+            var imgFoto = null;
+            if ($("#fileFotoAcreDep")[0] != null) {
+                imgFoto = $("#fileFotoAcreDep")[0].files[0];
+            }
+            var formData = new FormData();
+
+            formData.append("notaDiplomaticaNumero", $("#txtNotaDiplomaticaDep").val());//1
+            formData.append("idEstatus", parseInt($("#dllStatusTitular").val())); //1
+
+            formData.append("idNacionalidadActual", parseInt($("#dllNacionalidadActualDep").val())); // 1
+            formData.append("idNacionalidadAnterior", parseInt($("#dllNacionalidadAnteriorDep").val()));
+            formData.append("idEstadoCivil", parseInt($("#dllEstadoCivilDep").val())); //1
+            formData.append("idTipoDocumento", parseInt($("#dllTipoDocumentoDep").val()));
+
+
+            formData.append("idTipoParentesco", parseInt($("#dllParentescoDep").val()));
+            formData.append("apellidoPaterno", $("#txtApellidoPaternoAcreDep").val());
+
+            formData.append("apellidoMaterno", $("#txtApellidoMaternoAcreDep").val());
+
+            formData.append("nombres", $("#txtNombresAcreDep").val());
+            formData.append("numeroDocumento", $("#txtNumeroDocumentoDep").val());
+            formData.append("fechaNacimiento", $("#txtFechaNacimientoDep").val());
+            formData.append("fonoPeru", $("#txtTelefonoDep").val());
+            formData.append("fechaInicioFunciones", $("#txtFechaInicioDep").val());
+
+            formData.append("imagenFoto", imgFoto);
+            formData.append("notaDiplomaticaPdf", fileNotaDiplo);
+            var sexo = '';
+            if ($('#radioFDep').is(':checked')) {
+                sexo = 'F';
+            }
+            if ($("#radioMDep").is(':checked')) {
+                sexo = 'M';
+            }
+            formData.append("sexo", sexo);
+            formData.append("idCategoria", parseInt($("#dllCategoriaTitular").val()));
+            formData.append("cargo", $("#txtCargoTitular").val());
+            formData.append("idSolicitud", $("#hidSolDep").val());
+            formData.append("idTitular", ($("#hidPersonaTitular").val() === '' ? 0 : $("#hidPersonaTitular").val()));
+            documentosAdjuntos.forEach(function (archivoAdjunto, index) {
+                formData.append("documentosAdjuntos[" + index + "].idDocumentoAdjunto", archivoAdjunto.idDocumentoAdjunto);
+                formData.append("documentosAdjuntos[" + index + "].idTipoDocumento", archivoAdjunto.idTipoDocumento);
+                formData.append("documentosAdjuntos[" + index + "].rutaDocumento", archivoAdjunto.documento);
+            });
+            documentosAdjuntosEliminados.forEach(function (archivoAdjunto, index) {
+                formData.append("documentosAdjuntosEliminados[" + index + "].idDocumentoAdjunto", archivoAdjunto.idDocumentoAdjunto);
+            });
+            $.ajax({
+                url: `${API_URL}${metodoSolicitudAcreditacion.route}/subsanardependiente`,
+                type: 'PUT',
+                data: formData,
+                cache: false,
+                contentType: false,
+                processData: false,
+                beforeSend: function (request) {
+                    request.setRequestHeader("X-Auditoria", passport.getIdUserRol());
+                    request.setRequestHeader("Authorization", "Bearer " + passport.getJwtToken());
+                },
+                success: function (response) {
+
+                    if (response.result > 0) {
+                       alertify.success(tituloAlert.seguridad, response.message, () => { });
+                       $("#mdlAcreditacionDependiente").modal("hide");
+                       listadoSolicitudes();
+                    } else {
+                        alertify.error(tituloAlert.seguridad, response.message, () => { });
+                    }
+                }, error: function (jqXHR, textStatus, errorThrown) {
+                    msgException('actualizarSolicitudDependiente', jqXHR.responseJSON);
+                }
+
+            });
+        }
+    });
+}
+function actualizarSolicitudFinalizacion() {
+    alertify.confirm("Aviso", "¿Esta seguro de subsanar la solicitud de cancelación?", "question", (result) => {
+        if (result.isConfirmed) {
+            var fileNotaDiplo = null;
+            if ($("#fileNotaDiplomaticac")[0] != undefined) {
+                fileNotaDiplo = $("#fileNotaDiplomaticac")[0].files[0];
+            }
+           
+            var formData = new FormData();
+
+            formData.append("notaDiplomaticaNumero", $("#txtNotaDiplomaticac").val());//1
+           
+            formData.append("idSolicitud", $("#hidSolCan").val());
+            formData.append("notaDiplomaticaPdf", fileNotaDiplo);
+
+            formData.append("idTitular", ($("#hidPersonac").val() === '' ? 0 : $("#hidPersonac").val()));
+           
+            formData.append("fechaSalida", $("#txtFechaSalida").val());
+            formData.append("fechaFinFunciones", $("#txtFechaFin").val());
+
+            formData.append("idAcreditacion", $("#hidAcre").val());
+
+            documentosAdjuntos.forEach(function (archivoAdjunto, index) {
+                formData.append("documentosAdjuntos[" + index + "].idDocumentoAdjunto", archivoAdjunto.idDocumentoAdjunto);
+                formData.append("documentosAdjuntos[" + index + "].idTipoDocumento", archivoAdjunto.idTipoDocumento);
+                formData.append("documentosAdjuntos[" + index + "].rutaDocumento", archivoAdjunto.documento);
+            });
+            documentosAdjuntosEliminados.forEach(function (archivoAdjunto, index) {
+                formData.append("documentosAdjuntosEliminados[" + index + "].idDocumentoAdjunto", archivoAdjunto.idDocumentoAdjunto);
+            });
+            $.ajax({
+                url: `${API_URL}${metodoSolicitudAcreditacion.route}/subsanarfinalizacion`,
+                type: 'PUT',
+                data: formData,
+                cache: false,
+                contentType: false,
+                processData: false,
+                beforeSend: function (request) {
+                    request.setRequestHeader("X-Auditoria", passport.getIdUserRol());
+                    request.setRequestHeader("Authorization", "Bearer " + passport.getJwtToken());
+                },
+                success: function (response) {
+
+                    if (response.result > 0) {
+                       
+                            $("#mdlAcreditacionCancelada").modal("hide");
+                            alertify.success(tituloAlert.seguridad, response.message, () => { });
+                        listadoSolicitudes();
+
+                    } else {
+                        alertify.error(tituloAlert.seguridad, response.message, () => { });
+                    }
+                }, error: function (jqXHR, textStatus, errorThrown) {
+                    msgException('actualizarSolicitudFinalizacion', jqXHR.responseJSON);
+                }
+
+            });
+        }
+    });
+}
+function actualizarSolicitudModificacion() {
+    alertify.confirm("Aviso", "¿Esta seguro de actualizar la solicitud de modificación?", "question", (result) => {
+        if (result.isConfirmed) {
+            var fileNotaDiplo = null;
+            if ($("#fileNotaDiplomaticaM")[0] != undefined) {
+                fileNotaDiplo = $("#fileNotaDiplomaticaM")[0].files[0];
+            }
+            var formData = new FormData();
+            formData.append("notaDiplomaticaNumero", $("#txtNotaDiplomaticaM").val());//1
+            formData.append("idEstatus", parseInt($("#dllStatusM").val())); //1
+
+            formData.append("idNacionalidadActual", parseInt($("#dllNacionalidadActualM").val())); // 1
+            formData.append("idNacionalidadAnterior", parseInt($("#dllNacionalidadAnteriorM").val()));
+            formData.append("idEstadoCivil", parseInt($("#dllEstadoCivilM").val())); //1
+            formData.append("idTipoDocumento", parseInt($("#dllTipoDocumentoM").val()));
+            formData.append("idTipoParentesco", parseInt($("#dllParentescoM").val()));
+
+            formData.append("idSolicitud", $("#hidSolModi").val());
+
+            formData.append("apellidoPaterno", $("#txtApellidoPaternoAcreditacionM").val());
+
+            formData.append("apellidoMaterno", $("#txtApellidoMaternoAcreditacionM").val());
+
+            formData.append("nombres", $("#txtNombresAcreditacionM").val());
+            formData.append("numeroDocumento", $("#txtNumeroDocumentoM").val());
+            formData.append("fechaNacimiento", $("#txtFechaNacimientoM").val());
+            formData.append("domicilioPeru", $("#txtDireccionPeruM").val());
+            formData.append("domicilioExterior", '');
+            formData.append("fonoExterior", '');
+            formData.append("fonoPeru", '');
+            formData.append("funcionarioAtencion", '');
+            formData.append("fechaInicioFunciones", $("#txtFechaInicioM").val());
+
+            formData.append("notaDiplomaticaPdf", fileNotaDiplo);
+
+            formData.append("idCategoria", parseInt($("#dllCategoriaM").val()));
+            formData.append("cargo", $("#txtCargoM").val());
+
+            formData.append("idTitular", ($("#hidPersonaM").val() === '' ? 0 : $("#hidPersonaM").val()));
+            documentosAdjuntos.forEach(function (archivoAdjunto, index) {
+                formData.append("documentosAdjuntos[" + index + "].idDocumentoAdjunto", archivoAdjunto.idDocumentoAdjunto);
+                formData.append("documentosAdjuntos[" + index + "].idTipoDocumento", archivoAdjunto.idTipoDocumento);
+                formData.append("documentosAdjuntos[" + index + "].rutaDocumento", archivoAdjunto.documento);
+            });
+            documentosAdjuntosEliminados.forEach(function (archivoAdjunto, index) {
+                formData.append("documentosAdjuntosEliminados[" + index + "].idDocumentoAdjunto", archivoAdjunto.idDocumentoAdjunto);
+            });
+
+
+            formData.append("idAcreditacion", $("#hidAcreM").val());
+            $.ajax({
+                url: `${API_URL}${metodoSolicitudAcreditacion.route}/subsanaractualizacion`,
+                type: 'PUT',
+                data: formData,
+                cache: false,
+                contentType: false,
+                processData: false,
+                beforeSend: function (request) {
+                    // passport.getJwtToken()
+                    request.setRequestHeader("Authorization", "Bearer " + passport.getJwtToken());
+                    request.setRequestHeader("X-Auditoria", passport.getIdUserRol());
+                },
+                success: function (response) {
+
+                    if (response.result > 0) {
+                        
+                         $("#mdlAcreditacionModificar").modal("hide");
+                       alertify.success(tituloAlert.seguridad, response.message, () => { });
+                        listadoSolicitudes();
+                    } else {
+                        alertify.error(tituloAlert.seguridad, response.message, () => { });
+                        // console.log("entroooo else");
+                    }
+                }, error: function (jqXHR, textStatus, errorThrown) {
+                    msgException('actualizarSolicitudModificacion', jqXHR.responseJSON);
+                    // console.log("entroooo jqXHR");
+                }
+
+            });
+        }
+    });
+}
+function actualizarSolicitudCalidadOrdinario() {
+    alertify.confirm("Aviso", "¿Esta seguro de actualizar la solicitud de calidad migratoria?", "question", (result) => {
+        if (result.isConfirmed) {
+            var fileNotaDiplo = null;
+            if ($("#fileNotaDiplomaticaO")[0] != undefined) {
+                fileNotaDiplo = $("#fileNotaDiplomaticaO")[0].files[0];
+            }
+            var formData = new FormData();
+            formData.append("fechaFinVigencia", $("#txtFechaFinO").val());
+            formData.append("fechaInicioVigencia", $("#txtFechaInicioO").val());
+            formData.append("idCalidadMigratoria", parseInt($("#dllStatusNewO").val()));
+            formData.append("idSolicitud", parseInt($("#hidSolOrd").val()));
+            formData.append("comentario", "");
+           
+            formData.append("notaDiplomaticaPdf", fileNotaDiplo);
+            formData.append("notaDiplomaticaNumero", $("#txtNotaDiplomaticaO").val());//1
+            documentosAdjuntos.forEach(function (archivoAdjunto, index) {
+                formData.append("documentosAdjuntos[" + index + "].idDocumentoAdjunto", archivoAdjunto.idDocumentoAdjunto);
+                formData.append("documentosAdjuntos[" + index + "].idTipoDocumento", archivoAdjunto.idTipoDocumento);
+                formData.append("documentosAdjuntos[" + index + "].rutaDocumento", archivoAdjunto.documento);
+            });
+            documentosAdjuntosEliminados.forEach(function (archivoAdjunto, index) {
+                formData.append("documentosAdjuntosEliminados[" + index + "].idDocumentoAdjunto", archivoAdjunto.idDocumentoAdjunto);
+            });
+            $.ajax({
+                url: `${API_URL}${metodoSolicitudCalidad.route}/subsanar`,
+                type: 'PUT',
+                data: formData,
+                cache: false,
+                contentType: false,
+                processData: false,
+                beforeSend: function (request) {
+                    request.setRequestHeader("Authorization", "Bearer " + passport.getJwtToken());
+                    request.setRequestHeader("X-Auditoria", passport.getIdUserRol());
+                },
+                success: function (response) {
+
+                    if (response.result > 0) {
+                        $("#modalModificarOrdinario").modal("hide");
+                        alertify.success(tituloAlert.seguridad, response.message, () => { });
+                        listadoSolicitudes();
+                    } else {
+                        alertify.error(tituloAlert.seguridad, response.message, () => { });
+ 
+                    }
+                }, error: function (jqXHR, textStatus, errorThrown) {
+                    msgException('actualizarSolicitudCalidad', jqXHR.responseJSON);
+                  
+                }
+
+            });
+        }
+    });
+}
+function actualizarSolicitudCalidadProrroga() {
+    alertify.confirm("Aviso", "¿Esta seguro de actualizar la solicitud de prorroga de calidad migratoria?", "question", (result) => {
+        if (result.isConfirmed) {
+            var fileNotaDiplo = null;
+            if ($("#fileNotaDiplomaticaO")[0] != undefined) {
+                fileNotaDiplo = $("#fileNotaDiplomaticaO")[0].files[0];
+            }
+            var formData = new FormData();
+            formData.append("fechaProrroga", $("#txtFechaProrrogaO").val());
+            formData.append("idSolicitud", parseInt($("#hidSolOrd").val()));
+            formData.append("comentario", "");
+
+            formData.append("notaDiplomaticaPdf", fileNotaDiplo);
+            formData.append("notaDiplomaticaNumero", $("#txtNotaDiplomaticaO").val());//1
+            documentosAdjuntos.forEach(function (archivoAdjunto, index) {
+                formData.append("documentosAdjuntos[" + index + "].idDocumentoAdjunto", archivoAdjunto.idDocumentoAdjunto);
+                formData.append("documentosAdjuntos[" + index + "].idTipoDocumento", archivoAdjunto.idTipoDocumento);
+                formData.append("documentosAdjuntos[" + index + "].rutaDocumento", archivoAdjunto.documento);
+            });
+            documentosAdjuntosEliminados.forEach(function (archivoAdjunto, index) {
+                formData.append("documentosAdjuntosEliminados[" + index + "].idDocumentoAdjunto", archivoAdjunto.idDocumentoAdjunto);
+            });
+            $.ajax({
+                url: `${API_URL}${metodoSolicitudCalidad.route}/subsanarprorroga`,
+                type: 'PUT',
+                data: formData,
+                cache: false,
+                contentType: false,
+                processData: false,
+                beforeSend: function (request) {
+                    request.setRequestHeader("Authorization", "Bearer " + passport.getJwtToken());
+                    request.setRequestHeader("X-Auditoria", passport.getIdUserRol());
+                },
+                success: function (response) {
+
+                    if (response.result > 0) {
+                       
+                        $("#modalModificarOrdinario").modal("hide");
+                        alertify.success(tituloAlert.seguridad, response.message, () => { });
+                        listadoSolicitudes();
+                    } else {
+                        alertify.error(tituloAlert.seguridad, response.message, () => { });
+
+                    }
+                }, error: function (jqXHR, textStatus, errorThrown) {
+                    msgException('actualizarSolicitudCalidad', jqXHR.responseJSON);
+
+                }
+
+            });
+        }
+    });
+}
+
+function actualizarSolicitudCalidadCambio() {
+    alertify.confirm("Aviso", "¿Esta seguro de actualizar la solicitud de calidad migratoria?", "question", (result) => {
+        if (result.isConfirmed) {
+            var fileNotaDiplo = null;
+            if ($("#fileNotaDiplomaticaO")[0] != undefined) {
+                fileNotaDiplo = $("#fileNotaDiplomaticaO")[0].files[0];
+            }
+            var formData = new FormData();
+           formData.append("idCalidadMigratoriaCambio", parseInt($("#dllStatusCambio").val()));
+            formData.append("idSolicitud", parseInt($("#hidSolOrd").val()));
+            formData.append("comentario", "");
+
+            formData.append("notaDiplomaticaPdf", fileNotaDiplo);
+            formData.append("notaDiplomaticaNumero", $("#txtNotaDiplomaticaO").val());//1
+            documentosAdjuntos.forEach(function (archivoAdjunto, index) {
+                formData.append("documentosAdjuntos[" + index + "].idDocumentoAdjunto", archivoAdjunto.idDocumentoAdjunto);
+                formData.append("documentosAdjuntos[" + index + "].idTipoDocumento", archivoAdjunto.idTipoDocumento);
+                formData.append("documentosAdjuntos[" + index + "].rutaDocumento", archivoAdjunto.documento);
+            });
+            documentosAdjuntosEliminados.forEach(function (archivoAdjunto, index) {
+                formData.append("documentosAdjuntosEliminados[" + index + "].idDocumentoAdjunto", archivoAdjunto.idDocumentoAdjunto);
+            });
+            $.ajax({
+                url: `${API_URL}${metodoSolicitudCalidad.route}/subsanarcambio`,
+                type: 'PUT',
+                data: formData,
+                cache: false,
+                contentType: false,
+                processData: false,
+                beforeSend: function (request) {
+                    request.setRequestHeader("Authorization", "Bearer " + passport.getJwtToken());
+                    request.setRequestHeader("X-Auditoria", passport.getIdUserRol());
+                },
+                success: function (response) {
+
+                    if (response.result > 0) {
+                       
+                        $("#modalModificarOrdinario").modal("hide");
+                        alertify.success(tituloAlert.seguridad, response.message, () => { });
+                        listadoSolicitudes();
+                    } else {
+                        alertify.error(tituloAlert.seguridad, response.message, () => { });
+
+                    }
+                }, error: function (jqXHR, textStatus, errorThrown) {
+                    msgException('actualizarSolicitudCalidad', jqXHR.responseJSON);
+
+                }
+
+            });
+        }
+    });
+}
+function actualizarSolicitudCarnet() {
+    alertify.confirm("Aviso", "¿Esta seguro de actualizar la solicitud de carnet identidad?", "question", (result) => {
+        if (result.isConfirmed) {
+            var accion = null;
+
+            var fileNotaDiplo = null;
+            if ($("#fileNotaDiplomaticaCim")[0] != undefined) {
+                fileNotaDiplo = $("#fileNotaDiplomaticaCim")[0].files[0];
+            }
+            
+            var formData = new FormData();
+            formData.append("idSolicitud", parseInt($("#hidSolCim").val()));
+            formData.append("comentario", "");
+
+            formData.append("notaDiplomaticaPdf", fileNotaDiplo);
+            formData.append("notaDiplomaticaNumero", $("#txtNotaDiplomaticaCim").val());//1
+
+
+            if ($("#hcodigoAcCim").val() == K_SUBTIPO_SOL_CARNET_IDENTIDAD.EMISION) {
+                accion = `${API_URL}${metodoSolicitudCarnet.route}/subsanar`;
+                var fileFotoFirma = null;
+                var fileFoto = null;
+                if ($("#fileFotoFirma")[0] != undefined) {
+                    fileFotoFirma = $("#fileFotoFirma")[0].files[0];
+                }
+                if ($("#fileFotoCim")[0] != undefined) {
+                    fileFoto = $("#fileFotoCim")[0].files[0];
+                }
+                formData.append("fotoFirma", fileFotoFirma);
+                formData.append("imagenFoto", fileFoto);
+            } else if ($("#hcodigoAcCim").val() == K_SUBTIPO_SOL_CARNET_IDENTIDAD.RENOVACION) {
+                accion = `${API_URL}${metodoSolicitudCarnet.route}/subsanarrenovacion`;
+                var fileFotoFirma = null;
+                var fileFoto = null;
+                if ($("#fileFotoFirma")[0] != undefined) {
+                    fileFotoFirma = $("#fileFotoFirma")[0].files[0];
+                }
+                if ($("#fileFotoCim")[0] != undefined) {
+                    fileFoto = $("#fileFotoCim")[0].files[0];
+                }
+                formData.append("fotoFirma", fileFotoFirma);
+                formData.append("imagenFoto", fileFoto);
+            } else if ($("#hcodigoAcCim").val() == K_SUBTIPO_SOL_CARNET_IDENTIDAD.DUPLICADO) {
+                accion = `${API_URL}${metodoSolicitudCarnet.route}/subsanarduplicado`;
+            }
+
+            documentosAdjuntos.forEach(function (archivoAdjunto, index) {
+                formData.append("documentosAdjuntos[" + index + "].idDocumentoAdjunto", archivoAdjunto.idDocumentoAdjunto);
+                formData.append("documentosAdjuntos[" + index + "].idTipoDocumento", archivoAdjunto.idTipoDocumento);
+                formData.append("documentosAdjuntos[" + index + "].rutaDocumento", archivoAdjunto.documento);
+            });
+            documentosAdjuntosEliminados.forEach(function (archivoAdjunto, index) {
+                formData.append("documentosAdjuntosEliminados[" + index + "].idDocumentoAdjunto", archivoAdjunto.idDocumentoAdjunto);
+            });
+            $.ajax({
+                url: accion,
+                type: 'PUT',
+                data: formData,
+                cache: false,
+                contentType: false,
+                processData: false,
+                beforeSend: function (request) {
+                    request.setRequestHeader("Authorization", "Bearer " + passport.getJwtToken());
+                    request.setRequestHeader("X-Auditoria", passport.getIdUserRol());
+                },
+                success: function (response) {
+
+                    if (response.result > 0) {
+                      
+                        $("#modalModificarEmision").modal("hide");
+                        alertify.success(tituloAlert.seguridad, response.message, () => { });
+                        listadoSolicitudes();
+                    } else {
+                        alertify.error(tituloAlert.seguridad, response.message, () => { });
+
+                    }
+                }, error: function (jqXHR, textStatus, errorThrown) {
+                    msgException('actualizarSolicitudCarnet', jqXHR.responseJSON);
+
+                }
+
+            });
+        }
+    });
+}
+
+function limpiarFormularioGeneral() {
+    documentosAdjuntos = [];
+    documentosAdjuntosEliminados = [];
+    limpiarDocumentosAdjuntosGeneral();
+
+    tablaDocumentosAdjuntosGeneral(documentosAdjuntos, "bodyDocumentosAdjuntos");
+    tablaDocumentosAdjuntosGeneral(documentosAdjuntos, "bodyDocumentosAdjuntosDep");
+    tablaDocumentosAdjuntosGeneral(documentosAdjuntos, "bodyDocumentosAdjuntosc");
+    tablaDocumentosAdjuntosGeneral(documentosAdjuntos, "bodyDocumentosAdjuntosM");
+    tablaDocumentosAdjuntosGeneral(documentosAdjuntos, "bodyDocumentosAdjuntosO");
+    tablaDocumentosAdjuntosGeneral(documentosAdjuntos, "bodyDocumentosAdjuntosCim");
+
+    $("#imgFotoAcreditado").attr("src", "images/app/image_default.jpg");
+    $("#dllCategoria").val(0);
+    $("#txtCargo").val("");
+    $("#fileNotaDiplomatica").val('');
+    $("#fileFotoAcreditado").val('');
+    $("#txtFechaInicio").val('');
+    $("#txtDireccionPeru").val('');
+    $("#txtFechaNacimiento").val('');
+    $("#txtNumeroDocumento").val('');
+    $("#txtNombresAcreditacion").val('');
+    $("#txtApellidoMaternoAcreditacion").val('');
+    $("#txtApellidoPaternoAcreditacion").val('');
+    $("#dllTipoDocumento").val(0);
+    $("#dllEstadoCivil").val(0);
+    $("#dllNacionalidadAnterior").val(0);
+    $("#dllNacionalidadActual").val(0);
+    $("#dllStatus").val(0);
+    $("#txtNotaDiplomatica").val('');
+    $("#radioFTit").prop("checked", false);
+    $("#radioMTit").prop("checked", false);
+
+    /*DEPENDEINTE*/
+    $("#imgFotoAcreDep").attr("src", "images/app/image_default.jpg");
+    $("#imgFotoAcreditadoTitular").attr("src", "images/app/image_default.jpg");
+    $("#dllStatusTitular").val(0);
+    $("#dllCategoriaTitular").val(0);
+    $("#txtNombresyApellidosTitular").val('');
+    $("#txtFechaInicioTitular").val('');
+    $("#txtNombresAcreDep").val('');
+    $("#txtApellidoPaternoAcreDep").val('');
+    $("#txtApellidoMaternoAcreDep").val('');
+    $("#dllParentescoDep").val(0);
+    $("#txtFechaInicioDep").val('');
+    $("#txtFechaNacimientoDep").val('');
+    $("#dllNacionalidadAnteriorDep").val('');
+    $("#dllTipoDocumentoDep").val(0);
+    $("#dllNacionalidadActualDep").val(0);
+    $("#dllEstadoCivilDep").val(0);
+    $("#txtNumeroDocumentoDep").val('');
+    $("#txtNotaDiplomaticaDep").val('');
+    $("#fileNotaDiplomaticaDep").val('');
+    $("#hidPersonaTitular").val('');
+    $("#radioFDep").prop("checked", false);
+    $("#radioMDep").prop("checked", false);
+    /*finalizacion*/
+    $("#imgFotoAcreditadoc").attr("src", "images/app/image_default.jpg");
+    $("#dllCategoriac").val(0);
+    $("#dllCargoc").val(0);
+    $("#fileNotaDiplomaticac").val('');
+    $("#fileFotoAcreditadoc").val('');
+    $("#txtFechaInicioc").val('');
+    $("#txtNumeroDocumentoc").val('');
+    $("#txtNombresAcreditacionc").val('');
+    $("#txtApellidoMaternoAcreditacionc").val('');
+    $("#txtApellidoPaternoAcreditacionc").val('');
+    $("#dllTipoDocumentoc").val(0);
+    $("#dllStatusc").val(0);
+    $("#txtNotaDiplomaticac").val('');
+    $("#hidPersonac").val('');
+    $("#hidAcre").val('');
+
+    $("#txtFechaSalida").val('');
+    $("#txtFechaFin").val('');
+
+    $("#txtFechaInicioc").prop("disabled", true);
+    $("#dllTipoDocumentoc").prop("disabled", true);
+    $("#dllStatusc").prop("disabled", true);
+    $("#dllCategoriac").prop("disabled", true);
+    $("#dllCargoc").prop("disabled", true);
+    $("#txtNumeroDocumentoc").prop("disabled", true);
+    $("#txtNombresAcreditacionc").prop("disabled", true);
+    $("#txtApellidoMaternoAcreditacionc").prop("disabled", true);
+    $("#txtApellidoPaternoAcreditacionc").prop("disabled", true);
+
+    /*MODIFICACION*/
+    $("#imgFotoAcreditadoM").attr("src", "images/app/image_default.jpg");
+    $("#dllCategoriaM").val(0);
+    $("#dllCargoM").val(0);
+    $("#fileNotaDiplomaticaM").val('');
+    $("#fileFotoAcreditadoM").val('');
+    $("#txtFechaInicioM").val('');
+    $("#txtNumeroDocumentoM").val('');
+    $("#txtNombresAcreditacionM").val('');
+    $("#txtApellidoMaternoAcreditacionM").val('');
+    $("#txtApellidoPaternoAcreditacionM").val('');
+    $("#dllTipoDocumentoM").val(0);
+    $("#dllStatusM").val(0);
+    $("#txtNotaDiplomaticaM").val('');
+    $("#hidPersonaM").val('');
+    $("#hidAcreM").val('');
+
+    /*ORDINARIO*/
+    $("#imgFotoAcreditadoO").attr("src", "images/app/image_default.jpg");
+    $("#hidSolOrd").val(0);
+    $("#txtNombresApellidos").val('');
+    $("#dllStatusO").val(0);
+    $("#dllCategoriaO").val(0);
+    $("#dllCargoO").val(0);
+    $("#txtFechaInicioFuncionO").val('');
+    $("#txtFechaInicioO").val('');
+    $("#txtFechaFinO").val('');
+    $("#dllStatusNewO").val(0);
+    $("#dllTipoDocumentoM").val(0);
+    $("#txtNotaDiplomaticaO").val('');
+    $("#fileNotaDiplomaticaO").val('');
+    $("#dllTipoDocumentoAdjuntoO").val(0);
+    $("#fileDocumentoAjuntoO").val('');
+
+    /*carnet identidad*/
+    $("#imgFotoAcreditadoCim").attr("src", "images/app/image_default.jpg");
+    $("#imgFirmaCim").attr("src", "images/app/image_default.jpg");
+    $("#hidSolOrd").val(0);
+    $("#txtNombresApeCim").val('');
+    $("#dllStatusCim").val(0);
+    $("#dllCategoriaCim").val(0);
+    $("#dllCargoCim").val(0);
+    $("#txtFechaInicioFuncionCim").val('');
+    $("#txtFechaInicioCim").val('');
+    $("#txtFechaFinCim").val('');
+    $("#dllCalidadCim").val(0);
+    $("#dllTipoDocumentoCim").val(0);
+    $("#txtNotaDiplomaticaCim").val('');
+    $("#fileNotaDiplomaticaCim").val('');
+    $("#dllTipoDocumentoAdjuntoCim").val(0);
+    $("#fileDocumentoAjuntoCim").val('');
+    $("#dllParentescoCim").val(0);
+    $("#txtNombresApeTitCim").val('');
+
+    $("#dllParentescoCim").prop("disabled", true);
+    $("#txtNombresApeTitCim").prop("disabled", true);
+    $("#fileFotoCim").val("");
+}
+
+function agregarDocumentosGeneral(controlTipoDoc, controlFileDoc, controlBodyTabla) {
+    var f = new Date();
+    var idTipoDocumento = parseInt($("#" + controlTipoDoc).val());
+    var tipoDocumento = $("#" + controlTipoDoc).find('option:selected').text();
+    var documento = $("#" + controlFileDoc)[0].files[0];
+    var fechaActual = f.getDate() + "/" + (f.getMonth() + 1) + "/" + f.getFullYear();
+
+    if (idTipoDocumento != 0 && documento != undefined && documento != "") {
+        var documentoNuevo = {
+            idDocumentoAdjunto: 0,
+            idTipoDocumento: idTipoDocumento,
+            tipoDocumento: tipoDocumento,
+            documento: documento,
+            fechaCreacion: fechaActual
+        }
+
+        documentosAdjuntos.push(documentoNuevo);
+        tablaDocumentosAdjuntosGeneral(documentosAdjuntos, controlBodyTabla);
+        limpiarDocumentosAdjuntosGeneral();
+    } else {
+        alertify.warning("Se debe seleccionar un tipo de documento y un archivo .pdf");
+    }
+}
+
+function tablaDocumentosAdjuntosGeneral(arrayDocumentos, controlBodyTabla) {
+    var items = "";
+    $.each(arrayDocumentos, function (index, tp) {
+        var funcion = "";
+        var atributos = "";
+        if (tp.idDocumentoAdjunto == 0) {
+            funcion = "vistaPreviaDocumento(" + index + ")";
+        } else {
+            funcion = "verDocumento(this)";
+            atributos = "data-tipo='" + tp.tipoDocumento + "' data-rutadocumento='" + tp.rutaDocumento + "'";
+        }
+
+        var eliminar = 'eliminarDocumentoGeneral(this,"' + controlBodyTabla+'")';
+
+        items += "<tr><td>" + (parseInt(index) + 1) + "</td>" +
+            "<td>" + tp.tipoDocumento + "</td><td class='text-center'><h4><i " + atributos + " onclick='" + funcion + "' class='bi bi-filetype-pdf'></i></h4></td><td>" + tp.fechaCreacion + "</td><td><button data-input='" + index + "' onclick='" + eliminar + "' class='btn btn-sm btn-outline-dark'><i class='bi bi-trash3-fill'></i> Quitar documento</button></td></tr>";
+    });
+    $("#" + controlBodyTabla).html(items);
+}
+
+function eliminarDocumentoGeneral(control, controlBodyTabla) {
+    var id = $(control).data('input');
+
+    var objEliminado = documentosAdjuntos.filter((item, index) => parseInt(index) === id);
+
+    var objetoEliminado = {
+        idDocumentoAdjunto: objEliminado[0].idDocumentoAdjunto
+    }
+    documentosAdjuntosEliminados.push(objetoEliminado);
+
+
+    documentosAdjuntos = documentosAdjuntos.filter((item, index) => parseInt(index) !== id);
+
+    tablaDocumentosAdjuntosGeneral(documentosAdjuntos, controlBodyTabla);
+}
+
+
+function vistaPreviaDocumento(fileIndex) {
+    $("#mdlViewerPdf").modal("show");
+    documentoAdjuntoElegido = documentosAdjuntos.filter((item, index) => parseInt(index) === fileIndex);
+    var file = documentoAdjuntoElegido[0].documento;
+
+    if (file.type == "application/pdf") {
+        var fileReader = new FileReader();
+        fileReader.onload = function () {
+            var pdfData = new Uint8Array(this.result);
+            // Using DocumentInitParameters object to load binary data.
+            var loadingTask = pdfjsLib.getDocument({ data: pdfData });
+            loadingTask.promise.then(function (pdf) {
+                // console.log('PDF loaded');
+                _TOTAL_PAGES = pdf.numPages;
+                document.querySelector("#pdf-total-pages").innerHTML = pdf.numPages;
+                // Fetch the first page
+                var pageNumber = 1;
+                documentoPdfElegido = pdf;
+                verPaginaPdf(pdf, pageNumber);
+            }, function (reason) {
+                // PDF loading error
+                console.error(reason);
+            });
+        };
+        fileReader.readAsArrayBuffer(file);
+    }
+}
+function verPaginaPdf(pdf, pageNumber) {
+
+    pdf.getPage(pageNumber).then(function (page) {
+        // console.log('Page loaded');
+        _CURRENT_PAGE = pageNumber;
+        var scale = 1;
+        var viewport = page.getViewport({ scale: scale });
+
+        document.querySelector("#pdf-current-page").innerHTML = _CURRENT_PAGE;
+
+        // Prepare canvas using PDF page dimensions
+        var canvas = $("#pdf-canvas")[0];
+        var context = canvas.getContext('2d');
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+
+        // Render PDF page into canvas context
+        var renderContext = {
+            canvasContext: context,
+            viewport: viewport
+        };
+        var renderTask = page.render(renderContext);
+        renderTask.promise.then(function () {
+            // console.log('Page rendered');
+        });
+    });
+}
+function readImage(input, img) {
+    if (input.files && input.files[0]) {
+        if (input.files[0].type != "application/pdf") {
+            var reader = new FileReader();
+
+            reader.onload = function (e) {
+                $('#' + img).attr('src', e.target.result); // Renderizamos la imagen
+                $('#' + img).show();
+            }
+            reader.readAsDataURL(input.files[0]);
+        } else {
+            $("#" + img).attr("src", "images/app/image_default.jpg");
+        }
+
+    } else {
+        $("#" + img).attr("src", "images/app/image_default.jpg");
+    }
+}
+
+function verDocumentosAdu(control) {
+    var codigo = $(control).data("codigosolicitud");
+    var estado = $(control).data("codestado");
+    var request = {
+        idSolicitud: codigo
+    }
+    serviceSolicitudVehicular.getDocumentosNotaResolucion(request, headersprivilegios)
+        .then(response => {
+            $("#hcodigoSolDoc").val(response.idSolicitud);
+            $("#documentosNota").attr("src", response.notaDiplomaticaMrePdf);
+            $("#documentoResolucion").attr("src", response.resolucionAduaneraPdf);
+            if (estado == K_ESTADOS_SOL_VEHICULAR_IMP.RECIBIDO_CON_ADU) {
+                $("#seccionConfor").hide();
+            } else {
+                $("#seccionConfor").show();
+            }
+            $("#modalDocumentos").modal("show");
+        }).catch(error => {
+            msgException('verDocumentosAdu', error);
+        });
+}
+
+function conformidad(conforme) {
+    var request={
+        idSolicitud: parseInt($("#hcodigoSolDoc").val()),
+        esConforme:conforme
+    }
+    var mensaje = "¿ESTÁ SEGURO DE ESTAR CONFORME CON LA DOCUMENTACION PRESENTADA?";
+    if (conforme==0) {
+        mensaje = "¿ESTÁ SEGURO DE NO ESTAR CONFORME CON LA DOCUMENTACION PRESENTADA?";
+    }
+    alertify.confirm("Aviso", mensaje, "question", (result) => {
+        if (result.isConfirmed) {
+            serviceSolicitudVehicular.ConformidadSolicitudCarnet(request, headersprivilegios)
+                .then(response => {
+                    if (response.result > 0) {
+                        $("#modalDocumentos").modal("hide");
+                        alertify.success(tituloAlert.seguridad, response.message, () => { });
+                        listadoSolicitudes();
+                    } else {
+                        alertify.error(tituloAlert.seguridad, response.message, () => { });
+                    }
+                })
+                .catch(error => {
+                    msgException('conformidad', error);
+                });
+        }
+    });
+}
+/*FUNCIONES PRINCIPALES*/
+
+function logSeguimiento(collection, ctrlName) {
+    $(ctrlName).html("");
+    if (collection.length == 0) document.querySelector(ctrlName).append("NO SE ENCONTRARON REGISTROS DE SEGUIMIENTO.");
+    else {
+        collection.map(function (seg) {
+            $(ctrlName).append("<div class='row row-child'>" + "<div class='col-md-4'><b>Responsable: </b>" + seg.usuarioCreacion + "</div><div class='col-md-7'><b>Fecha: </b>" + seg.fechaCreacion + "</div></div>" +
+                "<div class='row row-child'>" + "<div class='col-md-4'><b>Estado: </b>" + estadoSpan(seg.estadoSolicitud, seg.idEstadoSolicitud, seg.codigoTipoSolicitud, parseInt(seg.codigoSubtipoSolicitud)) + "</div><div class='col-md-7'><b>Comentario: </b>" + seg.comentario + "</div></div><hr>");
+            
+        });
+    }
+}
+function verDocumentosAdjuntos(collection, ctrlName) {
+    $(ctrlName).html("");
+    if (collection.length == 0) document.querySelector(ctrlName).append("NO SE REGITRARON DOCUMENTOS ADJUNTOS.");
+    else {
+        $(ctrlName).append("<ul>");
+        collection.map(function (adjunto) {
+            $(ctrlName).append("<li><label>" + adjunto.tipoDocumento + "<button class='btn btn-ligth' data-tipo='" + adjunto.tipoDocumento + "' data-rutadocumento='" + (adjunto.rutaExpediente == undefined ? adjunto.rutaDocumento : adjunto.rutaExpediente) + "' onclick='verDocumento(this)'><i class='bi bi-filetype-pdf'></i></button></label></li>");
+        });
+        $(ctrlName).append("</ul>");
+    }
+}
+function verExpediente(control) {
+    var codigo = $(control).data("codigosolicitud");
+    var tipoSol = parseInt($(control).data("tiposol"));
+    var request = {
+        idSolicitud: parseInt(codigo)
+    }
+
+    switch (tipoSol) {
+
+        case K_TIPO_SOL.ACREDITACION:
+            serviceSolicitudAcreditacion.viewSolicitudPdf(request, headersprivilegios)
+                .then(response => {
+                    var file = new Blob([response], { type: 'application/pdf' });
+                    var fileURL = URL.createObjectURL(file);
+                    $("#Pdf_view").attr("src", fileURL);
+                    $("#mdlTitlePdf").html("Expediente de acreditación");
+                    $("#btnDescargar").attr("onclick", "window.open('" + fileURL + "')");
+                    $("#modalPdf").modal("show");
+                })
+                .catch(error => {
+                    msgException('serviceSolicitudAcreditacion', error);
+                });
+            break;
+        case K_TIPO_SOL.CALIDAD_MIGRATORIA:
+            serviceSolicitudCalidad.viewSolicitudPdf(request, headersprivilegios)
+                .then(response => {
+                    var file = new Blob([response], { type: 'application/pdf' });
+                    var fileURL = URL.createObjectURL(file);
+                    $("#Pdf_view").attr("src", fileURL);
+                    $("#mdlTitlePdf").html("Expediente de calidad migratoria");
+                    $("#btnDescargar").attr("onclick", "window.open('" + fileURL + "')");
+                    $("#modalPdf").modal("show");
+                })
+                .catch(error => {
+                    msgException('serviceSolicitudCalidad', error);
+                });
+            break;
+        case K_TIPO_SOL.CARNET_IDENTIDAD:
+            serviceSolicitudCarnet.viewSolicitudPdf(request, headersprivilegios)
+                .then(response => {
+                    var file = new Blob([response], { type: 'application/pdf' });
+                    var fileURL = URL.createObjectURL(file);
+                    $("#Pdf_view").attr("src", fileURL);
+                    $("#mdlTitlePdf").html("Expediente de carnet de identidad");
+                    $("#btnDescargar").attr("onclick", "window.open('" + fileURL + "')");
+                    $("#modalPdf").modal("show");
+                })
+                .catch(error => {
+                    msgException('serviceSolicitudCarnet', error);
+                });
+            break;
+        case K_TIPO_SOL.IMPORTACION_VEHICULOS:
+            serviceSolicitudVehicular.viewSolicitudPdf(request, headersprivilegios)
+                .then(response => {
+                    var file = new Blob([response], { type: 'application/pdf' });
+                    var fileURL = URL.createObjectURL(file);
+                    $("#Pdf_view").attr("src", fileURL);
+                    $("#mdlTitlePdf").html("Expediente vehicular");
+                    $("#btnDescargar").attr("onclick", "window.open('" + fileURL + "')");
+                    $("#modalPdf").modal("show");
+                })
+                .catch(error => {
+                    msgException('serviceSolicitudVehicular', error);
+                });
+            break;
+        case K_TIPO_SOL.TARJETA_PROPIEDAD_PLACAS:
+            serviceSolicitudTarjetaPropiedad.viewSolicitudPdf(request, headersprivilegios)
+                .then(response => {
+                    var file = new Blob([response], { type: 'application/pdf' });
+                    var fileURL = URL.createObjectURL(file);
+                    $("#Pdf_view").attr("src", fileURL);
+                    $("#mdlTitlePdf").html("Expediente tarjeta propiedad");
+                    $("#btnDescargar").attr("onclick", "window.open('" + fileURL + "')");
+                    $("#modalPdf").modal("show");
+                })
+                .catch(error => {
+                    msgException('serviceSolicitudTarjetaPropiedad', error);
+                });
+            break;
+    }
+
+    
+}
+function verDocumento(control) {
+    var ruta = $(control).data("rutadocumento");
+    var tipo = $(control).data("tipo");
+    $("#Pdf_view").attr("src", ruta);
+    $("#mdlTitlePdf").html("Documento adjunto: " + tipo);
+    $("#btnDescargar").attr("onclick", "window.open('" + ruta + "')");
+    $("#modalPdf").modal("show");
+}
+
+function verLog(control) {
+
+
+
+    $("#modalSeguimiento").modal("show");
+
+    var idSolicitud = $(control).data("codigosolicitud");
+    let request =
+    {
+        idSolicitud: idSolicitud
+    }
+
+    serviceLogSeguimiento.getLogSeguimientoListado(request, headersprivilegios)
+        .then(response => {
+            $("#divSeguimientoLog").html("");
+            $.each(response, function (index, tp) {
+
+                $("#divSeguimientoLog").append("<div class='row row-child'>" + "<div class='col-md-4'><b>Responsable: </b>" + tp.usuarioCreacion + "</div><div class='col-md-7'><b>Fecha: </b>" + tp.fechaCreacion + "</div></div>" +
+                    "<div class='row row-child'>" + "<div class='col-md-4'><b>Estado: </b>" + estadoSpan(tp.estadoSolicitud, tp.idEstadoSolicitud, tp.codigoTipoSolicitud, tp.codigoSubtipoSolicitud) + "</div><div class='col-md-7'><b>Comentario: </b>" + tp.comentario + "</div></div><hr>");
+
+            });
+
+        })
+        .catch(error => {
+            msgException('verLog', error);
+        });
+}
+function eliminar(control) {
+    var idSolicitud = $(control).data("codigosolicitud");
+    let datos =
+    {
+        idSolicitud: idSolicitud
+    }
+
+    alertify.confirm("Aviso", "¿ESTÁ SEGURO DE ELIMINAR LA SOLICITUD?", "question", (result) => {
+        if (result.isConfirmed) {
+            serviceSolicitud.delSolicitud(datos, headersprivilegios)
+                .then(response => {
+                    if (response.result > 0) {
+                        alertify.success(tituloAlert.seguridad, response.message, () => { });
+                        listadoSolicitudes()
+                    } else {
+                        alertify.error(tituloAlert.seguridad, response.message, () => { });
+                    }
+                })
+                .catch(error => {
+                    msgException('eliminar', error);
+                });
+        }
+    });
+}

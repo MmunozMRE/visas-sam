@@ -1,0 +1,459 @@
+﻿const API_URL = basePath.privilegiosApi;
+var documentosAdjuntos = [];
+var documentoPdfElegido, _CURRENT_PAGE, _TOTAL_PAGES;
+var tipoListadoBuscar = 0;
+
+validarLogin(() => { });
+
+$(function () {
+   
+    configTitular();
+       
+    $("#pdf-prev").click(function () {
+        if (_CURRENT_PAGE != 1) verPaginaPdf(documentoPdfElegido, --_CURRENT_PAGE);
+    });
+    $("#pdf-next").click(function () {
+        if (_CURRENT_PAGE != _TOTAL_PAGES) verPaginaPdf(documentoPdfElegido, ++_CURRENT_PAGE);
+    });
+
+    $("#btnRegistrarSolicitud").click(function () { registrarSolicitudTitular();    });
+   
+    $("#btnAgregarAdjunto").click(function () { agregarDocumentoTitular(); });
+
+    $("#fileFotoAcreditado").change(function () { readImage(this, "imgFotoAcreditado");    });
+   
+    $("#radioMTit").change(function () {
+        if ($('#radioMTit').is(':checked')) {
+            $("#radioFTit").prop("checked", false);
+            $("#hgenero").val("M");
+        } else {
+            $("#hgenero").val("");
+        }
+    });
+    $("#radioFTit").change(function () {
+        if ($('#radioFTit').is(':checked')) {
+            $("#radioMTit").prop("checked", false);
+            $("#hgenero").val("F");
+        } else {
+            $("#hgenero").val("");
+        }
+    });
+
+    /*form titular buscar acreditado no vigente*/
+    $("#btnBuscarAcreditado").click(function () {
+        mdlOrigen = origenConsulta.titular;
+        limpiarListadoPersonasAcreditadas();
+        listadoPersonasAcreditadas(mdlOrigen);
+        $("#mdlBuscarAcreditado").modal("show");
+    });
+    $("#btnBuscarPersona").click(function () { buscarPersonaxDocumento(); });
+    $("#btnBuscarAcreditadoFiltro").click(function () {listadoPersonasAcreditadas(mdlOrigen);    });
+});
+
+function buscarPersonaxDocumento() {
+    var request = {
+        idTipoDocumento: $("#dllTipoDocumento").val(),
+        numeroDocumento: $("#txtNumeroDocumento").val()
+    }
+    servicePersona.getPersonaxDocumento(request, headersprivilegios)
+        .then(response => {
+            if (response != null) {
+                $("#hidPersona").val(response.idPersona);
+                $("#txtNombresAcreditacion").val(response.nombres);
+                $("#txtApellidoPaternoAcreditacion").val(response.apellidoPaterno);
+                $("#txtApellidoMaternoAcreditacion").val(response.apellidoMaterno);
+                $("#txtFechaNacimiento").val(response.fechaNacimiento);
+
+                fillSelectEstadoCivil("dllEstadoCivil", response.idEstadoCivil, "Seleccione", function () { });
+                fillSelectNacionalidad("dllNacionalidadAnterior", response.idPaisNacimiento, "Seleccione", function () { });
+
+
+                switch (response.sexo) {
+                    case 'M':
+                        $("#radioMTit").prop("checked", true);
+                        $("#radioFTit").prop("checked", false);
+                        $("#hgenero").val(response.sexo);
+                        break;
+                    case 'F':
+                        $("#radioMTit").prop("checked", false);
+                        $("#radioFTit").prop("checked", true);
+                        $("#hgenero").val(response.sexo);
+                        break;
+                    default:
+                        $("#radioMTit").prop("checked", false);
+                        $("#radioFTit").prop("checked", false);
+                        $("#hgenero").val(response.sexo);
+                        break;
+                }
+            } else {
+                alertify.warning(tituloAlert.seguridad, response.message, () => { });
+            }
+           
+
+        })
+        .catch(error => {
+            msgException('seleccionarPersona', error);
+        });
+}
+function configTitular() {
+    limpiarAcreditacionTitular();
+    $("#seccionRadioButtons").show();
+    $("#hgenero").val("");
+
+    fillSelectTipoDocumento("dllTipoDocumento", 0, "Seleccione", function () { });
+    fillSelectEstadoCivil("dllEstadoCivil", 0, "Seleccione", function () { });
+    fillSelectNacionalidad("dllNacionalidadAnterior", 0, "Seleccione", function () { });
+    fillSelectNacionalidad("dllNacionalidadActual", 0, "Seleccione", function () { });
+    fillSelectStatus("dllStatus", 0, "Seleccione", function () { });
+    fillSelectCategoria("dllCategoria", 0, "Seleccione", function () { });
+    fillSelectClasificacionDocumento("dllTipoDocumentoAdjunto", 0, "Seleccione", function () { });
+}
+
+
+function limpiarListadoPersonasAcreditadas() {
+    $("#txtNombresFiltro").val();
+    $("#txtApellidosFiltro").val();
+    $("#txtNumeroDocumentoFiltro").val();
+}
+function limpiarDocumentosAdjuntos() {
+    $("#dllTipoDocumentoAdjunto").val(0);
+    $("#fileDocumentoAjunto").val('');
+
+}
+
+function listadoPersonasAcreditadas( paramOrigen) {
+   
+     let request =
+    {
+        nombres: $("#txtNombresFiltro").val(),
+        apellidos: $("#txtApellidosFiltro").val(),
+        numeroDocumento: $("#txtNumeroDocumentoFiltro").val(),
+        paginaActual: 0,
+        tamanioPagina: 0,
+        usurioLogueado: encodeURIComponent(passport.getIdUserRol()),
+        origenConsulta: paramOrigen,
+        idTitular: $("#hidPersonaTitular").val()
+    };
+    $("#gridPersonasAcreditadas").DataTable().clear();
+    $('#gridPersonasAcreditadas').DataTable({
+        processing: true,
+        serverSide: true,
+
+        ajax: function (d, cb) {
+
+            request.draw = d.draw
+            request.paginaActual = ((d.start / d.length) + 1)
+            request.tamanioPagina = d.length
+
+            serviceAcreditacion.getPersonaAcreditadaPaginado(request, headersprivilegios)
+                .then(response => {
+                    cb(response)
+                })
+                .catch(error => {
+                    msgException('listadoPersonasAcreditadas', error);
+                });
+
+        },
+        language: {
+            search: "Búsqueda:",
+            lengthMenu: "Mostrar _MENU_ registros por página",
+            zeroRecords: "No se encontraron registros",
+            info: "Se encontraron _TOTAL_ resultados.",
+            infoEmpty: "No se encontraron registros"
+        },
+        responsive: true,
+        destroy: true,
+        bLengthChange: false,
+        bFilter: false,
+        bInfo: true,
+        columns: [
+            {
+                data: 'tipoDocumento',
+                render: function (data, type, row, meta) {
+                    return meta.row + 1;
+                }
+            },
+            { data: 'tipoDocumento' },
+            { data: 'numeroDocumento' },
+            {
+                data: 'nombres',
+                render: function (data, type, row) {
+                     return row.apellidoPaterno + " " + (row.apellidoMaterno == null ? "" : row.apellidoMaterno) + " " + data;
+
+                }
+            },
+            {
+                data: 'idPersona',
+                render: function (data, type, row) {
+                    var resultado = '';
+                    var indicador = '';
+                    if (row.indicador != undefined) {
+                        indicador = ' data-indicador="'+row.indicador+'" ';
+                    }
+                    resultado += '<button onclick="seleccionarPersona(this,'+ paramOrigen +')" '+indicador+' data-input="' + data + '" class="btn btn-primary btn-sm"><i class="bi bi-check2-square"></i> Seleccionar</button> ';
+                    return resultado;
+                }
+            }
+        ]
+    });
+
+}
+function seleccionarPersona(control,   paramOrigen) {
+    let request ={
+        idTitular: $(control).data("input")
+    };
+    $("#btnBuscarAcreditadoDependiente").hide();
+    $("#mdlBuscarAcreditado").modal("hide");
+    
+
+        serviceAcreditacion.getPersonaAcreditadaXid(request, headersprivilegios)
+            .then(response => {
+              
+                 $("#hidPersona").val(response.idPersonaTitular);
+                 $("#txtNombresAcreditacion").val(response.nombres);
+                 $("#txtApellidoPaternoAcreditacion").val(response.apellidoPaterno);
+                 $("#txtApellidoMaternoAcreditacion").val(response.apellidoMaterno);
+                 $("#txtFechaInicio").val(response.fechaInicioFuncion);
+
+                 $("#txtNumeroDocumento").val(response.numeroDocumento);
+                 $("#txtFechaNacimiento").val(response.fechaNacimiento);
+                 $("#txtFechaInicio").val(response.fechaInicioFuncion);
+                 $("#txtDireccionPeru").val(response.direccionPeru);
+
+                 if (response.imagenFoto != null) $("#imgFotoAcreditado").attr("src", response.imagenFoto);
+
+                 fillSelectTipoDocumento("dllTipoDocumento", response.idTipoDocumento, "Seleccione", function () { });
+                 fillSelectEstadoCivil("dllEstadoCivil", response.idEstadoCivil, "Seleccione", function () { });
+                 fillSelectNacionalidad("dllNacionalidadAnterior", response.idNacionalidadActual, "Seleccione", function () { });
+                 fillSelectNacionalidad("dllNacionalidadActual", response.idNacionalidadAnterior, "Seleccione", function () { });
+                 fillSelectStatus("dllStatus", response.idStatus, "Seleccione", function () { });
+                 fillSelectCategoria("dllCategoria", response.idCategoria, "Seleccione", function () { });
+                      
+                $("#txtCargo").val(response.cargo);
+        
+                switch (response.sexo) {
+                    case 'M':
+                        $("#radioMTit").prop("checked", true);
+                        $("#radioFTit").prop("checked", false);
+                        $("#hgenero").val(response.sexo);
+                        break;
+                    case 'F':
+                        $("#radioMTit").prop("checked", false);
+                        $("#radioFTit").prop("checked", true);
+                        $("#hgenero").val(response.sexo);
+                        break;
+                    default:
+                        $("#radioMTit").prop("checked", false);
+                        $("#radioFTit").prop("checked", false);
+                        $("#hgenero").val(response.sexo);
+                        break;
+                }
+
+            })
+            .catch(error => {
+                msgException('seleccionarPersona', error);
+            });
+    
+   
+}
+function registrarSolicitudTitular() {
+
+    alertify.confirm("Aviso", "¿Esta seguro de registrar la solicitud?", "question", (result) => {
+        if (result.isConfirmed) {
+
+            var formData = new FormData();
+
+            formData.append("notaDiplomaticaNumero", $("#txtNotaDiplomatica").val());//1
+            formData.append("idEstatus", parseInt($("#dllStatus").val())); //1
+
+            formData.append("idNacionalidadActual", parseInt($("#dllNacionalidadActual").val())); // 1
+            formData.append("idNacionalidadAnterior", parseInt($("#dllNacionalidadAnterior").val()));
+            formData.append("idEstadoCivil", parseInt($("#dllEstadoCivil").val())); //1
+            formData.append("idTipoDocumento", parseInt($("#dllTipoDocumento").val()));
+
+            formData.append("apellidoPaterno", $("#txtApellidoPaternoAcreditacion").val());
+
+            formData.append("apellidoMaterno", $("#txtApellidoMaternoAcreditacion").val());
+
+            formData.append("nombres", $("#txtNombresAcreditacion").val());
+            formData.append("numeroDocumento", $("#txtNumeroDocumento").val());
+            if ($("#txtFechaNacimiento").val()!=""){
+                formData.append("fechaNacimiento", $("#txtFechaNacimiento").val());
+            }
+            if ($("#txtFechaInicio").val() != "") {
+                formData.append("fechaInicioFunciones", $("#txtFechaInicio").val());
+            }
+            formData.append("domicilioPeru", $("#txtDireccionPeru").val());
+            formData.append("domicilioExterior", '');
+            formData.append("fonoExterior", '');
+            formData.append("fonoPeru", $("#txtTelefono").val());
+            formData.append("funcionarioAtencion", '');
+           
+
+            formData.append("imagenFoto", $("#fileFotoAcreditado")[0].files[0]);
+            formData.append("notaDiplomaticaPdf", $("#fileNotaDiplomatica")[0].files[0]);
+
+            formData.append("idCategoria", parseInt($("#dllCategoria").val()));
+            formData.append("cargo", $("#txtCargo").val());
+
+            formData.append("sexo", $("#hgenero").val());
+        
+            documentosAdjuntos.forEach(function (archivoAdjunto, index) {
+                formData.append("documentosAdjuntos[" + index + "].idTipoDocumento", archivoAdjunto.idTipoDocumento);
+                formData.append("documentosAdjuntos[" + index + "].rutaDocumento", archivoAdjunto.documento);
+            });
+
+            $.ajax({
+                url: `${API_URL}${metodoSolicitudAcreditacion.route}/titular`,
+                type: 'POST',
+                data: formData,
+                cache: false,
+                contentType: false,
+                processData: false,
+                beforeSend: function (request) {
+                    request.setRequestHeader("X-Auditoria", passport.getIdUserRol());
+                    request.setRequestHeader("Authorization", "Bearer " + passport.getJwtToken());
+                },
+                success: function (response) {
+
+                    if (response.result > 0) {
+                       alertify.success(tituloAlert.seguridad, response.message, () => { });
+                        limpiarAcreditacionTitular();
+                    } else {
+                        alertify.error(tituloAlert.seguridad, response.message, () => { });
+                       // console.log("entroooo else");
+                    }
+                }, error: function (jqXHR, textStatus, errorThrown) {
+                    msgException('getInforme', jqXHR.responseJSON);
+                   // console.log("entroooo jqXHR");
+                }
+
+            });
+        }
+    });
+}
+
+
+function limpiarAcreditacionTitular() {
+    documentosAdjuntos = [];
+    limpiarDocumentosAdjuntos();
+    tablaDocumentosAdjuntos(documentosAdjuntos);
+    $("#imgFotoAcreditado").attr("src", "../images/app/image_default.jpg"); //src="~/images/app/image_default.jpg"
+    $("#dllCategoria").val(0);
+    $("#fileNotaDiplomatica").val('');
+    $("#fileFotoAcreditado").val('');
+    $("#txtFechaInicio").val('');
+    $("#txtDireccionPeru").val('');
+    $("#txtFechaNacimiento").val('');
+    $("#txtNumeroDocumento").val('');
+    $("#txtNombresAcreditacion").val('');
+    $("#txtApellidoMaternoAcreditacion").val('');
+    $("#txtApellidoPaternoAcreditacion").val('');
+    $("#dllTipoDocumento").val(0);
+    $("#dllEstadoCivil").val(0);
+    $("#dllNacionalidadAnterior").val(0);
+    $("#dllNacionalidadActual").val(0);
+    $("#dllStatus").val(0);
+    $("#txtTelefono").val('');
+    $("#txtNotaDiplomatica").val('');
+    $("#radioFTit").prop("checked", false);
+    $("#radioMTit").prop("checked", false);
+    $("#txtCargo").val("");
+}
+
+function agregarDocumentoTitular() {
+    var f = new Date();
+    var idTipoDocumento = parseInt($("#dllTipoDocumentoAdjunto").val());
+    var tipoDocumento = $("#dllTipoDocumentoAdjunto").find('option:selected').text();
+    var documento = $("#fileDocumentoAjunto")[0].files[0];
+    var fechaActual = f.getDate() + "/" + (f.getMonth() + 1) + "/" + f.getFullYear();
+    
+    if (idTipoDocumento != 0 && documento != undefined && documento != "") {
+        var documentoNuevo = {
+            idTipoDocumento: idTipoDocumento,
+            tipoDocumento: tipoDocumento,
+            documento: documento,
+            fecha: fechaActual
+        }
+
+        documentosAdjuntos.push(documentoNuevo);
+    
+        tablaDocumentosAdjuntos(documentosAdjuntos);
+        limpiarDocumentosAdjuntos();
+    } else {
+        alertify.warning("Se debe seleccionar un tipo de documento y un archivo .pdf");
+    }
+    
+}
+
+function tablaDocumentosAdjuntos(arrayDocumentos) {
+    var items = "";
+    $.each(arrayDocumentos, function (index, tp) {
+        items += "<tr><td>" + (parseInt(index) + 1) + "</td>" + "<td>" + tp.tipoDocumento + "</td><td class='text-center'><h4><i onclick='vistaPreviaDocumento(" + index + ")' class='bi bi-filetype-pdf'></i></h4></td><td>" + tp.fecha + "</td><td><button data-input='" + index + "' onclick='eliminarDocumento(this)' class='btn btn-sm btn-outline-dark'><i class='bi bi-trash3-fill'></i> Quitar documento</button></td></tr>";
+    });
+    $("#bodyDocumentosAdjuntos").html(items);
+}
+
+function eliminarDocumento(control) {
+    var id = $(control).data('input');
+
+    documentosAdjuntos = documentosAdjuntos.filter((item, index) => parseInt(index) !== id);
+
+    tablaDocumentosAdjuntos(documentosAdjuntos);
+}
+
+function vistaPreviaDocumento(fileIndex) {
+    $("#mdlViewerPdf").modal("show");
+    documentoAdjuntoElegido = documentosAdjuntos.filter((item, index) => parseInt(index) === fileIndex);
+    var file = documentoAdjuntoElegido[0].documento;
+   
+    if (file.type == "application/pdf") {
+        var fileReader = new FileReader();
+        fileReader.onload = function () {
+            var pdfData = new Uint8Array(this.result);
+            // Using DocumentInitParameters object to load binary data.
+            var loadingTask = pdfjsLib.getDocument({ data: pdfData });
+            loadingTask.promise.then(function (pdf) {
+               // console.log('PDF loaded');
+                _TOTAL_PAGES = pdf.numPages;
+                document.querySelector("#pdf-total-pages").innerHTML = pdf.numPages;
+                // Fetch the first page
+                var pageNumber = 1;
+                documentoPdfElegido = pdf;
+                verPaginaPdf(pdf, pageNumber);
+            }, function (reason) {
+                // PDF loading error
+                console.error(reason);
+            });
+        };
+        fileReader.readAsArrayBuffer(file);
+    }
+}
+function verPaginaPdf(pdf, pageNumber) {
+
+   
+    pdf.getPage(pageNumber).then(function (page) {
+       // console.log('Page loaded');
+        _CURRENT_PAGE = pageNumber;
+        var scale = 1;
+        var viewport = page.getViewport({ scale: scale });
+
+        document.querySelector("#pdf-current-page").innerHTML = _CURRENT_PAGE;
+
+        // Prepare canvas using PDF page dimensions
+        var canvas = $("#pdf-canvas")[0];
+        var context = canvas.getContext('2d');
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+
+        // Render PDF page into canvas context
+        var renderContext = {
+            canvasContext: context,
+            viewport: viewport
+        };
+        var renderTask = page.render(renderContext);
+        renderTask.promise.then(function () {
+           // console.log('Page rendered');
+        });
+    });
+}

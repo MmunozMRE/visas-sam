@@ -1,0 +1,556 @@
+﻿ 
+var acreditacionController = {
+
+    
+    verSolicitudTitular(control) {
+    var request = {
+        idSolicitud: parseInt($(control).data("codigosolicitud")),
+        idUsuarioRolSession: encodeURIComponent(passport.getIdUserRol())
+    }
+    serviceSolicitudAcreditacion.getSolicitudxId(request, headersprivilegios)
+        .then(response => {
+
+            $("#lblCodigoSolicitud").html("Nro: " + response.codigoGenerado);
+
+            if (response.numeroAcreditacion != null && response.numeroAcreditacion != '') {
+                $("#lblnumAcreditacion").html("<h4><span class='badge text-bg-primary'>Código acreditación: " + response.numeroAcreditacion + "</span></h4>");
+            }
+
+            $("#lblEstado").html("<b>Estado:</b> " + estadoSpan(response.estadoSolicitud, response.codigoEstadoSolicitud, response.codigoTipoSolicitud));
+            $("#lblNumNota").html("<b>Nota N°:</b> " + response.notaDiplomaticaNumero);
+            $("#lblNomSol").html("<b>Nombre del solicitante:</b> " + response.nombres);
+            $("#lblCategoria").html("<b>Categoria:</b> " + response.categoria);
+            $("#lblFecCrea").html("<b>Fecha creación:</b> " + response.fechaCreacion);
+            $("#lblApeSol").html("<b>Apellidos del solicitante:</b> " + response.apellidoPaterno + " " + (response.apellidoMaterno == null ? "" : response.apellidoMaterno));
+            $("#lblCargo").html("<b>Cargo:</b> " + response.cargo);
+            $("#lblResSol").html("<b>Responsable de Solicitud:</b> " + response.personaResponsable);
+            $("#lblStatus").html("<b>Status:</b> " + response.estatus);
+            $("#lblFecInicio").html("<b>Fecha inicio:</b> " + response.fechaInicioFuncionesStr);
+            $("#lblFecNac").html("<b>Fecha y lugar de nacimiento:</b> " + response.fechaNacimientoStr);
+            $("#lblEstCivil").html("<b>Estado civil:</b> " + response.estadoCivil);
+            $("#lblNacAct").html("<b>Nacionalidad actual:</b> " + response.nacionalidadActual);
+            $("#lblNumDocTipPas").html("<b>N° y tipo de pasaporte:</b> " + response.numeroDocumento + " - " + response.tipoDocumento);
+            $("#lblNacAnt").html("<b>Nacionalidades anteriores:</b> " + (response.nacionalidadAnterior == null ? '-' : response.nacionalidadAnterior));
+            $("#lblDirPeru").html("<b>Dirección en el Perú:</b> " + response.domicilioPeru);
+            $("#lblTelPart").html("<b>Teléfono(s) particular(es)</b>: " + (response.fonoPeru == null ? '-' : response.fonoPeru));
+            $("#imgFoto").attr("src", response.imagenFoto);
+            $("#lblNotaDiplomatica").html("<button class='btn  btn-light btn-sm-2 text-primary ' data-bs-toggle='tooltip' data-bs-placement='top' title='Ver Nota Diplomática PDF' data-tipo='Nota diplomática' data-rutadocumento='" + response.notaDiplomaticaPdf + "' onclick='verDocumento(this)'><i class='bi bi-filetype-pdf'></i> Ver PDF</button>");
+            verDocumentosAdjuntos(response.adjuntos, "#divDocumentos");
+            logSeguimiento(response.seguimiento, "#divSeguimiento");
+            var genero = '';
+            switch (response.sexo) {
+                case 'M':
+                    genero = 'Masculino';
+                    break;
+                case 'F':
+                    genero = 'Femenino';
+                    break;
+                default:
+                    genero = '-';
+                    break;
+            }
+            $("#lblGeneroTit").html("<b>Sexo: </b>" + genero);
+            $("#modalViewTitular").modal("show");
+        })
+        .catch(error => {
+            msgException('verSolicitudTitular', error);
+        });
+
+    },
+    verSolicitudFinalizar(control) {
+    var request = {
+        idSolicitud: parseInt($(control).data("codigosolicitud")),
+        idUsuarioRolSession: encodeURIComponent(passport.getIdUserRol())
+    }
+    serviceSolicitudAcreditacion.getSolicitudxId(request, headersprivilegios)
+        .then(response => {
+
+            $("#lblCodigoSolicitudF").html("Nro: " + response.codigoGenerado);
+
+            if (response.numeroAcreditacion != null && response.numeroAcreditacion != '') {
+                $("#lblnumAcreditacionF").html("<h4><span class='badge text-bg-primary'>Código acreditación: " + response.numeroAcreditacion + "</span></h4>");
+            }
+
+            $("#lblEstadoF").html("<b>Estado:</b> " + estadoSpan(response.estadoSolicitud, response.codigoEstadoSolicitud, response.codigoTipoSolicitud));
+            $("#lblNumNotaF").html("<b>Nota N°:</b> " + response.notaDiplomaticaNumero);
+            $("#lblNomSolF").html("<b>Nombre del solicitante:</b> " + response.nombres);
+            $("#lblCategoriaF").html("<b>Categoria:</b> " + response.categoria);
+            $("#lblFecCreaF").html("<b>Fecha creación:</b> " + response.fechaCreacion);
+            $("#lblApeSolF").html("<b>Apellidos del solicitante:</b> " + response.apellidoPaterno + " " + (response.apellidoMaterno == null ? "" : response.apellidoMaterno));
+            $("#lblCargoF").html("<b>Cargo:</b> " + response.cargo);
+            $("#lblResSolF").html("<b>Responsable de Solicitud:</b> " + response.personaResponsable);
+            $("#lblStatusF").html("<b>Status:</b> " + response.estatus);
+            $("#lblFecInicioF").html("<b>Fecha inicio:</b> " + response.fechaInicioFuncionesStr);
+            $("#lblFecNacF").html("<b>Fecha y lugar de nacimiento:</b> " + response.fechaNacimientoStr);
+            $("#lblEstCivilF").html("<b>Estado civil:</b> " + response.estadoCivil);
+            $("#lblNacActF").html("<b>Nacionalidad actual:</b> " + response.nacionalidadActual);
+            $("#lblNumDocTipPasF").html("<b>N° y tipo de pasaporte:</b> " + response.numeroDocumento + " - " + response.tipoDocumento);
+            $("#lblNacAntF").html("<b>Nacionalidades anteriores:</b> " + (response.nacionalidadAnterior == null ? "" : response.nacionalidadAnterior));
+            $("#lblDirPeruF").html("<b>Dirección en el Perú:</b> " + response.domicilioPeru);
+            $("#lblTelPartF").html("<b>Teléfono(s) particular(es)</b>: " + response.fonoPeru + " - " + response.fonoExterior);
+            $("#imgFotoF").attr("src", response.imagenFoto);
+            $("#lblNotaDiplomaticaF").html("<button class='btn  btn-light btn-sm-2 text-primary ' data-bs-toggle='tooltip' data-bs-placement='top' title='Ver Nota Diplomática PDF' data-tipo='Nota diplomática' data-rutadocumento='" + response.notaDiplomaticaPdf + "' onclick='verDocumento(this)'><i class='bi bi-filetype-pdf'></i> Ver PDF</button>");
+            $("#lblFechaSalida").html("<b>Fecha salida del pais: </b>"+response.fechaSalidaPaisStr);
+            $("#lblFechaFinFunciones").html("<b>Fecha fin de funciones: </b>" + response.fechaFinFuncionesStr);
+            if (K_ESTADOS_SOL_ACREDITADO.APROBADO == response.codigoEstadoSolicitud) {
+                $("#divDocFinFun").show();
+            } else {
+                $("#divDocFinFun").hide();
+            }
+            if (response.idTipoParentesco == 0) {
+                $("div[name='seccionTitularF']").show();
+                $("div[name='seccionDependienteF']").hide();
+
+            } else {
+                $("div[name='seccionTitularF']").hide();
+                $("div[name='seccionDependienteF']").show();
+
+            }
+            $("#lblParentescoF").html("<b>Parentesco con el titular:</b> " + response.parentesco);
+            $("#lblNombreTitularF").html("<b>Nombre del titular:</b> " + response.nombreTitular + " " + response.apellidoPaternoTitular + " " + response.apellidoMaternoTitular);
+            
+            $("#btnVerDocFinFun").attr("data-rutadocumento", response.finFuncionesPdf);
+            $("#btnVerDocFinFun").attr("data-tipo", "Documento de sustento de fin de funciones");
+            $("#btnVerDocFinFun").attr("onclick", "verDocumento(this)");
+
+            verDocumentosAdjuntos(response.adjuntos, "#divDocumentosF");
+            logSeguimiento(response.seguimiento, "#divSeguimientoF");
+            $("#modalViewFinalizacion").modal("show");
+        })
+        .catch(error => {
+            msgException('verSolicitudFinalizar', error);
+        });
+
+    },
+    verSolicitudActualizar(control) {
+        var request = {
+            idSolicitud: parseInt($(control).data("codigosolicitud")),
+            idUsuarioRolSession: encodeURIComponent(passport.getIdUserRol())
+        }
+        serviceSolicitudAcreditacion.getSolicitudxId(request, headersprivilegios)
+            .then(response => {
+
+                $("#lblCodigoSolicitudA").html("Nro: " + response.codigoGenerado);
+
+                if (response.numeroAcreditacion != null && response.numeroAcreditacion != '') {
+                    $("#lblnumAcreditacionA").html("<h4><span class='badge text-bg-primary'>Código acreditación: " + response.numeroAcreditacion + "</span></h4>");
+                }
+                if (response.idTipoParentesco == 0) {
+                    $("div[name='seccionTitularA']").show();
+                    $("div[name='seccionDependienteA']").hide();
+
+                } else {
+                    $("div[name='seccionTitularA']").hide();
+                    $("div[name='seccionDependienteA']").show();
+
+                }
+
+                $("#lblEstadoA").html("<b>Estado:</b> " + estadoSpan(response.estadoSolicitud, response.codigoEstadoSolicitud, response.codigoTipoSolicitud));
+                $("#lblNumNotaA").html("<b>Nota N°:</b> " + response.notaDiplomaticaNumero);
+                $("#lblNomSolA").html("<b>Nombre del solicitante:</b> " + response.nombres);
+                $("#lblCategoriaA").html("<b>Categoria:</b> " + response.categoria);
+                $("#lblFecCreaA").html("<b>Fecha creación:</b> " + response.fechaCreacion);
+                $("#lblApeSolA").html("<b>Apellidos del solicitante:</b> " + response.apellidoPaterno + " " + (response.apellidoMaterno == null ? "" : response.apellidoMaterno));
+                $("#lblCargoA").html("<b>Cargo:</b> " + response.cargo);
+                $("#lblResSolA").html("<b>Responsable de Solicitud:</b> " + response.personaResponsable);
+                $("#lblStatusA").html("<b>Status:</b> " + response.estatus);
+                $("#lblFecInicioA").html("<b>Fecha inicio:</b> " + response.fechaInicioFuncionesStr);
+                $("#lblFecNacA").html("<b>Fecha y lugar de nacimiento:</b> " + response.fechaNacimientoStr);
+                $("#lblEstCivilA").html("<b>Estado civil:</b> " + response.estadoCivil);
+                $("#lblNacActA").html("<b>Nacionalidad actual:</b> " + response.nacionalidadActual);
+                $("#lblNumDocTipPasA").html("<b>N° y tipo de pasaporte:</b> " + response.numeroDocumento + " - " + response.tipoDocumento);
+                $("#lblNacAntA").html("<b>Nacionalidades anteriores:</b> " + (response.nacionalidadAnterior == null ? "" : response.nacionalidadAnterior));
+                $("#lblDirPeruA").html("<b>Dirección en el Perú:</b> " + response.domicilioPeru);
+                $("#lblTelPartA").html("<b>Teléfono(s) particular(es)</b>: " + response.fonoPeru + " - " + response.fonoExterior);
+                $("#imgFotoA").attr("src", response.imagenFoto);
+                $("#lblNotadiplomaticaA").html("<button class='btn  btn-light btn-sm-2 text-primary ' data-bs-toggle='tooltip' data-bs-placement='top' title='Ver Nota Diplomática PDF' data-tipo='Nota diplomática' data-rutadocumento='" + response.notaDiplomaticaPdf + "' onclick='verDocumento(this)'><i class='bi bi-filetype-pdf'></i> Ver PDF</button>");
+                verDocumentosAdjuntos(response.adjuntos, "#divDocumentosA");
+                logSeguimiento(response.seguimiento, "#divSeguimientoA");
+
+                if (response.idTipoParentesco == 0) {
+                    $("div[name='seccionTitularM']").show();
+                    $("div[name='seccionDependienteM']").hide();
+
+                    $("div[name='seccionTitularA']").show();
+                    $("div[name='seccionDependienteA']").hide();
+
+                } else {
+                    $("div[name='seccionTitularM']").hide();
+                    $("div[name='seccionDependienteM']").show();
+
+                    $("div[name='seccionTitularA']").hide();
+                    $("div[name='seccionDependienteA']").show();
+                }
+                $("#lblParentescoM").html("<b>Parentesco con el titular: </b> " + response.parentesco);
+                $("#lblNombreTitularM").html("<b>Nombre del titular: </b> " + response.nombreTitular + " " + response.apellidoPaternoTitular + " " + (response.apellidoMaternoTitular == null ? "" : response.apellidoMaternoTitular));
+                $("#lblParentescoA").html("<b>Parentesco con el titular: </b> " + response.parentesco);
+                $("#lblNombreTitularA").html("<b>Nombre del titular: </b> " + response.nombreTitular + " " + response.apellidoPaternoTitular + " " + (response.apellidoMaternoTitular == null ? "" : response.apellidoMaternoTitular));
+
+                var original = {
+                    idSolicitudAcreditacion: response.idSolicitudacreditacion,
+                    idAcreditacion: response.idAcreReferencia
+                }
+                serviceAcreditacion.getAcreditacionLog(original, headersprivilegios)
+                    .then(responseOriginal => {
+                        $("#lblDirPeruM").html("<b>Dirección en el Perú:</b> " + responseOriginal.direccionPeru);
+                        $("#lblStatusM").html("<b>Status:</b> " + responseOriginal.estatus);
+                        $("#lblFecInicioM").html("<b>Fecha inicio:</b> " + responseOriginal.fechaInicioFuncionStr);
+                        $("#lblFecNacM").html("<b>Fecha y lugar de nacimiento:</b> " + responseOriginal.fechaNacimientoStr);
+                        $("#lblEstCivilM").html("<b>Estado civil:</b> " + responseOriginal.estadoCivil);
+                        $("#lblNacActM").html("<b>Nacionalidad actual:</b> " + responseOriginal.nacionalidadActual);
+                        $("#lblNomSolM").html("<b>Nombre del solicitante:</b> " + responseOriginal.nombre);
+                        $("#lblCategoriaM").html("<b>Categoria:</b> " + responseOriginal.categoria);
+                        $("#lblApeSolM").html("<b>Apellidos del solicitante:</b> " + responseOriginal.apellidoPaterno + " " + (responseOriginal.apellidoMaterno == null ? "" : responseOriginal.apellidoMaterno));
+                        $("#lblCargoM").html("<b>Cargo:</b> " + responseOriginal.cargo);
+                        
+                        $("#lblEstCivilM").html("<b>Estado civil:</b> " + responseOriginal.estadoCivil);
+                        $("#lblNacAntM").html("<b>Nacionalidad anterior:</b> " + (responseOriginal.nacionalidadAnterior == null ? "" : responseOriginal.nacionalidadAnterior));
+
+
+                    })
+                    .catch(error => {
+                        alertify.error(tituloAlert.seguridad, error.messages)
+                    });
+
+                $("#modalViewActualizacion").modal("show");
+            })
+            .catch(error => {
+                msgException('verSolicitudActualizar', error);
+            });
+
+    },
+    verSolicitudDependiente(control) {
+    var request = {
+        idSolicitud: parseInt($(control).data("codigosolicitud")),
+        idUsuarioRolSession: encodeURIComponent(passport.getIdUserRol())
+    }
+    serviceSolicitudAcreditacion.getSolicitudxId(request, headersprivilegios)
+        .then(response => {
+
+
+
+            $("#lblCodigoSolicitudv").html("Nro: " + response.codigoGenerado);
+            if (response.numeroAcreditacion != null && response.numeroAcreditacion != '') {
+                $("#lblnumAcreditacionv").html("<h4><span class='badge text-bg-primary'>Código acreditación: " + response.numeroAcreditacion + "</span></h4>");
+            }
+         
+            $("#lblNumAcrev").html(response.codigoGenerado);
+            $("#lblEstadov").html("<b>Estado:</b> " + estadoSpan(response.estadoSolicitud, response.codigoEstadoSolicitud, response.codigoTipoSolicitud));
+            $("#lblNumNotav").html("<b>Nota N°:</b> " + response.notaDiplomaticaNumero);
+            $("#lblNomDepv").html("<b>Nombre del solicitante:</b> " + response.nombres);
+            $("#lblCategoriav").html("<b>Categoria:</b> " + response.categoria);
+            $("#lblFecCreav").html("<b>Fecha creación:</b> " + response.fechaCreacion);
+            $("#lblApeDepv").html("<b>Apellidos del solicitante:</b> " + response.apellidoPaterno + " " + (response.apellidoMaterno == null ? "" : response.apellidoMaterno));
+            $("#lblCargov").html("<b>Cargo:</b> " + response.cargo);
+            $("#lblResSolv").html("<b>Responsable de Solicitud:</b> " + response.personaResponsable);
+            $("#lblStatusv").html("<b>Status:</b> " + response.estatus);
+            $("#lblFecIniciov").html("<b>Fecha inicio:</b> " + response.fechaInicioFuncionesStr);
+            $("#lblFecNacv").html("<b>Fecha y lugar de nacimiento:</b> " + response.fechaNacimientoStr);
+            $("#lblEstCivilv").html("<b>Estado civil:</b> " + response.estadoCivil);
+            $("#lblNacActv").html("<b>Nacionalidad actual:</b> " + response.nacionalidadActual);
+            $("#lblNumDocTipPasv").html("<b>N° y tipo de pasaporte:</b> " + response.numeroDocumento + " - " + response.tipoDocumento);
+            $("#lblNacAntv").html("<b>Nacionalidades anteriores:</b> " + (response.nacionalidadAnterior == null ? '-' : response.nacionalidadAnterior));
+            $("#lblDirPeruv").html("<b>Dirección en el Perú:</b> " + response.domicilioPeru);
+            $("#lblTelPartv").html("<b>Teléfono(s) particular(es)</b>: " + response.fonoPeru + " - " + response.fonoExterior);
+            $("#imgFotov").attr("src", response.imagenFoto);
+            $("#lblNomTitv").html("<b>Nombre de titular:</b> " + response.nombreTitular);
+            $("#lblApeTitv").html("<b>Apellidos del titular:</b> " + response.apellidoPaternoTitular + " " + response.apellidoMaternoTitular);
+            $("#lblRangoTitv").html("<b>Cargo titular:</b> " + response.cargoTitular);
+            $("#lblParentescov").html("<b>Parentesco:</b> " + response.parentesco);
+            $("#lblFecInicioDep").html("<b>Fecha inicio:</b> " + response.fechaInicioFuncionesStr);
+
+            $("#lblNotaDiplomaticav").html("<button class='btn  btn-light btn-sm-2 text-primary ' data-bs-toggle='tooltip' data-bs-placement='top' title='Ver Nota Diplomática PDF' data-tipo='Nota diplomática' data-rutadocumento='" + response.notaDiplomaticaPdf + "' onclick='verDocumento(this)'><i class='bi bi-filetype-pdf'></i> Ver PDF</button>");
+            verDocumentosAdjuntos(response.adjuntos, "#divDocumentosv");
+            logSeguimiento(response.seguimiento, "#divSeguimientov");
+            var genero = '';
+            switch (response.sexo) {
+                case 'M':
+                    genero = 'Masculino';
+                    break;
+                case 'F':
+                    genero = 'Femenino';
+                    break;
+                default:
+                    genero = '-';
+                    break;
+            }
+            $("#lblGeneroDep").html("<b>Sexo: </b>" + genero);
+            $("#modalViewDependiente").modal("show");
+        })
+        .catch(error => {
+            msgException('verSolicitudDependiente', error);
+        });
+
+    },
+
+
+    verSolicitudTitularModificar(control) {
+        var request = {
+            idSolicitud: parseInt($(control).data("codigosolicitud")),
+            idUsuarioRolSession: encodeURIComponent(passport.getIdUserRol())
+        }
+        limpiarFormularioGeneral();
+        serviceSolicitudAcreditacion.getSolicitudxId(request, headersprivilegios)
+            .then(response => {
+                
+                $("#hidSolTit").val(response.idSolicitud);
+               
+                fillSelectClasificacionDocumento("dllTipoDocumentoAdjunto", 0, "Seleccione", function () { });
+                fillSelectTipoDocumento("dllTipoDocumento", response.idTipoDocumento, "Seleccione", function () { });
+                fillSelectEstadoCivil("dllEstadoCivil", response.idEstadoCivil, "Seleccione", function () { });
+                fillSelectNacionalidad("dllNacionalidadAnterior", response.idNacionalidadAnterior, "Seleccione", function () { });
+                fillSelectNacionalidad("dllNacionalidadActual", response.idNacionalidadActual, "Seleccione", function () { });
+                fillSelectStatus("dllStatus", response.idEstatus, "Seleccione", function () { });
+                fillSelectCategoria("dllCategoria", response.idCategoria, "Seleccione", function () { });
+                $("#txtCargo").val(response.cargo);
+                $("#txtNumeroDocumento").val(response.numeroDocumento);
+                $("#hidPersona").val(response.idTitular);
+                $("#txtNombresAcreditacion").val(response.nombres);
+                $("#txtApellidoPaternoAcreditacion").val(response.apellidoPaterno);
+                $("#txtApellidoMaternoAcreditacion").val(response.apellidoMaterno);
+                $("#txtFechaInicio").val(response.fechaInicioFuncionesModi);
+                $("#txtTelefono").val(response.fonoPeru);
+
+                if (response.sexo == 'F') {
+                    $("#radioFTit").prop("checked", true);
+                } else {
+                    $("#radioFTit").prop("checked", false);
+                }
+                if (response.sexo == 'M') {
+                    $("#radioMTit").prop("checked", true);
+                } else {
+                    $("#radioMTit").prop("checked", false);
+                }
+                $("#imgFotoAcreditado").attr("src", response.imagenFoto);
+
+                $("#txtFechaNacimiento").val(response.fechaNacimientoModi);
+                $("#txtDireccionPeru").val(response.domicilioPeru);
+                $("#txtNotaDiplomatica").val(response.notaDiplomaticaNumero);
+
+                documentosAdjuntos = response.adjuntos;
+                tablaDocumentosAdjuntosGeneral(response.adjuntos, "bodyDocumentosAdjuntos");
+                logSeguimiento(response.seguimiento, "#divLogSegTit");
+               
+                $("#btnNotDip").attr("data-rutadocumento", response.notaDiplomaticaPdf);
+                $("#btnNotDip").attr("data-tipo", "Nota diplomática");
+                $("#btnNotDip").attr("onclick","verDocumento(this)");
+
+                $("#mdlAcreditacionTitular").modal("show");
+            })
+            .catch(error => {
+                msgException('AcreditacionTitular', error);
+            });
+
+    },
+    verSolicitudFinalizarModificar(control) {
+        limpiarFormularioGeneral();
+        var request = {
+            idSolicitud: parseInt($(control).data("codigosolicitud")),
+            idUsuarioRolSession: encodeURIComponent(passport.getIdUserRol())
+        }
+        serviceSolicitudAcreditacion.getSolicitudxId(request, headersprivilegios)
+            .then(response => {
+
+                $("#hidSolCan").val(response.idSolicitud);
+
+                fillSelectClasificacionDocumento("dllTipoDocumentoAdjuntoc", 0, "Seleccione", function () { });
+                fillSelectTipoDocumento("dllTipoDocumentoc", response.idTipoDocumento, "Seleccione", function () { });
+                fillSelectEstadoCivil("dllEstadoCivilc", response.idEstadoCivil, "Seleccione", function () { });
+                fillSelectNacionalidad("dllNacionalidadAnteriorc", response.idNacionalidadActual, "Seleccione", function () { });
+                fillSelectNacionalidad("dllNacionalidadActualc", response.idNacionalidadAnterior, "Seleccione", function () { });
+                fillSelectStatus("dllStatusc", response.idEstatus, "Seleccione", function () { });
+                fillSelectCategoria("dllCategoriac", response.idCategoria, "Seleccione", function () { });
+                $("#txtCargoC").val(response.cargo);
+                $("#txtNumeroDocumentoc").val(response.numeroDocumento);
+                $("#hidPersonac").val(response.idTitular);
+                $("#txtNombresAcreditacionc").val(response.nombres);
+                $("#txtApellidoPaternoAcreditacionc").val(response.apellidoPaterno);
+                $("#txtApellidoMaternoAcreditacionc").val(response.apellidoMaterno);
+                $("#txtFechaInicioc").val(response.fechaInicioFuncionesModi);
+
+                $("#imgFotoAcreditadoc").attr("src", response.imagenFoto);
+                $("#hidAcre").val(response.idAcreReferencia);
+                $("#txtFechaNacimientoc").val(response.fechaNacimientoModi);
+                $("#txtDireccionPeruc").val(response.domicilioPeru);
+                $("#txtNotaDiplomaticac").val(response.notaDiplomaticaNumero);
+                $("#txtFechaSalida").val(response.fechaSalidaPaisModi);
+                $("#txtFechaFin").val(response.fechaFinFuncionesModi);
+                documentosAdjuntos = response.adjuntos;
+
+                tablaDocumentosAdjuntosGeneral(response.adjuntos, "bodyDocumentosAdjuntosc");
+                logSeguimiento(response.seguimiento, "#divLogSegCan");
+
+                $("#btnNotDipc").attr("data-rutadocumento", response.notaDiplomaticaPdf);
+                $("#btnNotDipc").attr("data-tipo", "Nota diplomática");
+                $("#btnNotDipc").attr("onclick", "verDocumento(this)");
+                $("#txtNombresApellidosTitc").prop("disabled", true);
+                $("#dllParentescoc").prop("disabled", true);
+                $("#txtCargoC").prop("disabled", true);
+
+                if (response.idTipoParentesco == 0) {
+                    $("div[name='seccionTitularc']").show();
+                    $("div[name='seccionDependientec']").hide();
+
+                    $("#txtNombresApellidosTitc").val("");
+                } else {
+                    $("div[name='seccionTitularc']").hide();
+                    $("div[name='seccionDependientec']").show();
+
+                    $("#txtNombresApellidosTitc").val(response.nombreTitular + " " + response.apellidoPaternoTitular + " " + response.apellidoMaternoTitular);
+                    fillSelectTipoParentesco("dllParentescoc", response.idTipoParentesco, "Seleccione", function () { });
+                }
+                $("#mdlAcreditacionCancelada").modal("show");
+            })
+            .catch(error => {
+                alertify.error(tituloAlert.seguridad, error.messages)
+            });
+
+    },
+    verSolicitudActualizarModificar(control) {
+        var request = {
+            idSolicitud: parseInt($(control).data("codigosolicitud")),
+            idUsuarioRolSession: encodeURIComponent(passport.getIdUserRol())
+        }
+        limpiarFormularioGeneral();
+        serviceSolicitudAcreditacion.getSolicitudxId(request, headersprivilegios)
+            .then(response => {
+                $("#hidSolModi").val(response.idSolicitud);
+                $("#dllTipoDocumentoM").prop("disabled", true);
+                $("#txtNumeroDocumentoM").prop("disabled", true);
+                $("#txtNombresAcreditacionM").prop("disabled", true);
+                $("#txtApellidoPaternoAcreditacionM").prop("disabled", true);
+                $("#txtApellidoMaternoAcreditacionM").prop("disabled", true);
+                $("#dllStatusM").prop("disabled", true);
+                $("#txtFechaInicioM").prop("disabled", true);
+                
+                fillSelectClasificacionDocumento("dllTipoDocumentoAdjuntoM", 0, "Seleccione", function () { });
+                fillSelectTipoDocumento("dllTipoDocumentoM", response.idTipoDocumento, "Seleccione", function () { });
+                fillSelectEstadoCivil("dllEstadoCivilM", response.idEstadoCivil, "Seleccione", function () { });
+                fillSelectNacionalidad("dllNacionalidadAnteriorM", response.idNacionalidadAnterior, "Seleccione", function () { });
+                fillSelectNacionalidad("dllNacionalidadActualM", response.idNacionalidadActual, "Seleccione", function () { });
+                fillSelectStatus("dllStatusM", response.idEstatus, "Seleccione", function () { });
+                fillSelectCategoria("dllCategoriaM", response.idCategoria, "Seleccione", function () { });
+                $("#txtCargoM").val(response.cargo);
+                $("#txtNumeroDocumentoM").val(response.numeroDocumento);
+                $("#hidPersonaM").val(response.idTitular);
+                $("#txtNombresAcreditacionM").val(response.nombres);
+                $("#txtApellidoPaternoAcreditacionM").val(response.apellidoPaterno);
+                $("#txtApellidoMaternoAcreditacionM").val(response.apellidoMaterno);
+                $("#txtFechaInicioM").val(response.fechaInicioFuncionesModi);
+
+                $("#imgFotoAcreditadoM").attr("src", response.imagenFoto);
+                $("#hidAcreM").val(response.idAcreReferencia);
+                $("#txtFechaNacimientoM").val(response.fechaNacimientoModi);
+                $("#txtDireccionPeruM").val(response.domicilioPeru);
+                $("#txtNotaDiplomaticaM").val(response.notaDiplomaticaNumero);
+                
+                documentosAdjuntos = response.adjuntos;
+
+                tablaDocumentosAdjuntosGeneral(response.adjuntos, "bodyDocumentosAdjuntosM");
+                logSeguimiento(response.seguimiento, "#divLogSegModi");
+
+                $("#btnNotDipM").attr("data-rutadocumento", response.notaDiplomaticaPdf);
+                $("#btnNotDipM").attr("data-tipo", "Nota diplomática");
+                $("#btnNotDipM").attr("onclick", "verDocumento(this)");
+                $("#txtNombresApellidosTitM").prop("disabled", true);
+                $("#dllParentescoM").prop("disabled", true);
+                $("#dllParentescoM").val(0);
+
+                if (response.idTipoParentesco == 0) {
+                    $("div[name='seccionTitularM']").show();
+                    $("div[name='seccionDependienteM']").hide();
+                    fillSelectTipoParentesco("dllParentescoM", response.idTipoParentesco, "Seleccione", function () { });
+                    $("#txtNombresApellidosTitM").val("");
+                } else {
+                    $("div[name='seccionTitularM']").hide();
+                    $("div[name='seccionDependienteM']").show();
+
+                    $("#txtNombresApellidosTitM").val(response.nombreTitular + " " + response.apellidoPaternoTitular + " " + response.apellidoMaternoTitular);
+                    fillSelectTipoParentesco("dllParentescoM", response.idTipoParentesco, "Seleccione", function () { });
+                }
+                $("#mdlAcreditacionModificar").modal("show");
+            })
+            .catch(error => {
+                alertify.error(tituloAlert.seguridad, error.messages)
+            });
+
+    },
+    verSolicitudDependienteModificar(control) {
+        var request = {
+            idSolicitud: parseInt($(control).data("codigosolicitud"))
+        }
+        limpiarFormularioGeneral();
+        serviceSolicitudAcreditacion.getSolicitudxId(request, headersprivilegios)
+            .then(response => {
+
+                $("#hidSolDep").val(response.idSolicitud);
+                var buscarpersona = {
+                    idTitular: response.idTitular
+                }
+                serviceAcreditacion.getPersonaAcreditadaXid(buscarpersona, headersprivilegios)
+                    .then(persona => {
+                        fillSelectTipoDocumento("dllTipoDocumentoDep", persona.idTipoDocumento, "Seleccione", function () { });
+                        fillSelectStatus("dllStatusTitular", persona.idStatus, "Seleccione", function () { });
+                        fillSelectCategoria("dllCategoriaTitular", persona.idCategoria, "Seleccione", function () { });
+                        $("#txtCargoTitular").val(response.cargo);
+                        $("#txtNombresyApellidosTitular").val(persona.nombres + " " + persona.apellidoPaterno + " " + persona.apellidoMaterno);
+                        if (persona.imagenFoto != null) $("#imgFotoAcreditadoTitular").attr("src", persona.imagenFoto);
+                        $("#txtFechaInicioTitular").val(persona.fechaInicioFuncion);
+
+                    })
+                    .catch(error => {
+                        alertify.error(tituloAlert.seguridad, error.messages)
+                    });
+
+                fillSelectClasificacionDocumento("dllTipoDocumentoAdjuntoDep", 0, "Seleccione", function () { });
+           
+                fillSelectTipoParentesco("dllParentescoDep", response.idTipoParentesco, "Seleccione", function () { })
+
+                fillSelectNacionalidad("dllNacionalidadAnteriorDep", response.idNacionalidadAnterior, "Seleccione", function () { });
+                fillSelectNacionalidad("dllNacionalidadActualDep", response.idNacionalidadActual, "Seleccione", function () { });
+                fillSelectEstadoCivil("dllEstadoCivilDep", response.idEstadoCivil, "Seleccione", function () { });
+
+                $("#txtFechaInicioDep").val(response.fechaInicioFuncionesModi);
+                if (response.sexo == 'F') {
+                    $("#radioFDep").prop("checked", true);
+                } else {
+                    $("#radioFDep").prop("checked", false);
+                }
+                if (response.sexo == 'M') {
+                    $("#radioMDep").prop("checked", true);
+                } else {
+                    $("#radioMDep").prop("checked", false);
+                }
+
+                $("#txtNumeroDocumentoDep").val(response.numeroDocumento);
+                $("#hidPersonaTitular").val(response.idTitular);
+                $("#txtNombresAcreDep").val(response.nombres);
+                $("#txtApellidoPaternoAcreDep").val(response.apellidoPaterno);
+                $("#txtApellidoMaternoAcreDep").val(response.apellidoMaterno);
+                
+                $("#imgFotoAcreDep").attr("src", response.imagenFoto);
+                $("#txtFechaNacimientoDep").val(response.fechaNacimientoModi);
+                $("#txtNotaDiplomaticaDep").val(response.notaDiplomaticaNumero);
+                $("#txtTelefono").val(response.fonoPeru);
+                $("#txtCargoTitular").prop("disabled",true);
+                documentosAdjuntos = response.adjuntos;
+
+                tablaDocumentosAdjuntosGeneral(response.adjuntos, "bodyDocumentosAdjuntosDep");
+                logSeguimiento(response.seguimiento, "#divLogSegDep");
+
+                $("#btnNotDipDep").attr("data-rutadocumento", response.notaDiplomaticaPdf);
+                $("#btnNotDipDep").attr("data-tipo", "Nota diplomática");
+                $("#btnNotDipDep").attr("onclick", "verDocumento(this)");
+
+
+                $("#mdlAcreditacionDependiente").modal("show");
+            })
+            .catch(error => {
+                msgException('getSolicitudxId', error);
+            });
+
+    }
+ };
+
+
+ 
