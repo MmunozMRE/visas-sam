@@ -1,9 +1,9 @@
-Definir campos form 005 DGC
+definir campos form 005 DGC
 Definir si formulario DGC nace Aprobado y si puede nacer denegado
-Redefinir en funcion a los campos de excel
-No existe numeración para Cambio CM Otorgamientos, se utiliza el mismo form y tabla de Visas
+redefinir en funcion a los campos de excel
+no existe numeración para Cambio CM Otorgamientos, se utiliza el mismo form y tabla de Visas
 Agregar Boton para la importación Masiva Excel
-Botón importar excel
+botón importar excel
 
 
 

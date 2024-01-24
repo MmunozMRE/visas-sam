@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<!-- saved from url=(0023)http://localhost:58290/ -->
+<html lang="en" data-bs-theme="light">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta http-equiv="origin-trial" content="Az520Inasey3TAyqLyojQa8MnmCALSEU29yQFW8dePZ7xQTvSt73pHazLFTK5f7SyLUJSo2uKLesEtEa9aUYcgMAAACPeyJvcmlnaW4iOiJodHRwczovL2dvb2dsZS5jb206NDQzIiwiZmVhdHVyZSI6IkRpc2FibGVUaGlyZFBhcnR5U3RvcmFnZVBhcnRpdGlvbmluZyIsImV4cGlyeSI6MTcyNTQwNzk5OSwiaXNTdWJkb21haW4iOnRydWUsImlzVGhpcmRQYXJ0eSI6dHJ1ZX0=">
+        <link rel="SHORTCUT ICON" href="http://localhost:58290/images/app/favicon.ico">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>MRE - CONSULTA DOCUMENTOS</title>
+        <script src="./MRE-PRIVILEGIOS-PERU_files-dashboard/core.js.descarga"></script>
+        <script src="./MRE-PRIVILEGIOS-PERU_files-dashboard/md5.js.descarga"></script>
+        <link href="./MRE-PRIVILEGIOS-PERU_files-dashboard/bootstrap.min.css" rel="stylesheet">
+        <script src="./MRE-PRIVILEGIOS-PERU_files-dashboard/bootstrap.bundle.min.js.descarga"></script>
+        <link rel="stylesheet" href="./MRE-PRIVILEGIOS-PERU_files-dashboard/site.css">
+        <link rel="stylesheet" href="./MRE-PRIVILEGIOS-PERU_files-dashboard/dashboard.css">
+        <link rel="stylesheet" href="./MRE-PRIVILEGIOS-PERU_files-dashboard/sidebars.css">
+        <link rel="stylesheet" href="./MRE-PRIVILEGIOS-PERU_files-dashboard/loading.css">
+        <link rel="stylesheet" href="./MRE-PRIVILEGIOS-PERU_files-dashboard/tracking.css">
+        <script src="./MRE-PRIVILEGIOS-PERU_files-dashboard/jquery.min.js.descarga"></script>
+        <!--<link href="./MRE-PRIVILEGIOS-PERU_files-dashboard/bootstrap-icons.css" rel="stylesheet">-->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css">
+        <script src="./MRE-PRIVILEGIOS-PERU_files-dashboard/site.js.descarga"></script>
+        <link rel="stylesheet" type="text/css" href="./MRE-PRIVILEGIOS-PERU_files-dashboard/datatables.min.css">
+        <script type="text/javascript" src="./MRE-PRIVILEGIOS-PERU_files-dashboard/datatables.min.js.descarga"></script>
+        <link rel="stylesheet" type="text/css" href="./MRE-PRIVILEGIOS-PERU_files-dashboard/responsive.bootstrap.min.css">
+        <link rel="stylesheet" type="text/css" href="./MRE-PRIVILEGIOS-PERU_files-dashboard/responsive.dataTables.min.css">
+        <link rel="stylesheet" type="text/css" href="./MRE-PRIVILEGIOS-PERU_files-dashboard/responsive.bootstrap4.min.css">
+        <script type="text/javascript" src="./MRE-PRIVILEGIOS-PERU_files-dashboard/responsive.bootstrap.min.js.descarga"></script>
+        <script type="text/javascript" src="./MRE-PRIVILEGIOS-PERU_files-dashboard/dataTables.responsive.min.js.descarga"></script>
+        <script type="text/javascript" src="./MRE-PRIVILEGIOS-PERU_files-dashboard/responsive.bootstrap4.min.js.descarga"></script>
+        <link rel="stylesheet" type="text/css" href="./MRE-PRIVILEGIOS-PERU_files-dashboard/sweetalert2.min.css">
+        <script type="text/javascript" src="./MRE-PRIVILEGIOS-PERU_files-dashboard/sweetalert2.min.js.descarga"></script>
+        <script type="text/javascript" src="./MRE-PRIVILEGIOS-PERU_files-dashboard/pdf.worker.js.descarga"></script>
+        <script type="text/javascript" src="./MRE-PRIVILEGIOS-PERU_files-dashboard/pdf.js.descarga"></script>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+        <script src="./MRE-PRIVILEGIOS-PERU_files-dashboard/general.js.descarga"></script>
+        <style>
+            @font-face {
+                font-family: "Oswald";
+                src: url('./MRE-PRIVILEGIOS-PERU_files-dashboard/Oswald-VariableFont_wght.ttf');
+            }
+
+            /*@font-face {
+            font-family: "Archivo";
+            src: url('css/fonts/Archivo/Archivo-VariableFont_wdth,wght.ttf'),url('css/fonts/Archivo/Archivo-Italic-VariableFont_wdth,wght.ttf');
+        }*/
+            body {
+                font-family: "Oswald", "Archivo" !important;
+            }
+
+            .bd-placeholder-img {
+                font-size: 1.125rem;
+                text-anchor: middle;
+                -webkit-user-select: none;
+                -moz-user-select: none;
+                user-select: none;
+            }
+
+            @media (min-width: 768px) {
+                .bd-placeholder-img-lg {
+                    font-size: 3.5rem;
+                }
+            }
+
+            .b-example-divider {
+                width: 100%;
+                height: 3rem;
+                background-color: rgba(0, 0, 0, .1);
+                border: solid rgba(0, 0, 0, .15);
+                border-width: 1px 0;
+                box-shadow: inset 0 .5em 1.5em rgba(0, 0, 0, .1), inset 0 .125em .5em rgba(0, 0, 0, .15);
+            }
+
+            .b-example-vr {
+                flex-shrink: 0;
+                width: 1.5rem;
+                height: 100vh;
+            }
+
+            .bi {
+                vertical-align: -.125em;
+                fill: currentColor;
+            }
+
+            .nav-scroller {
+                position: relative;
+                z-index: 2;
+            }
+
+            .nav-scroller .nav {
+                display: flex;
+                flex-wrap: nowrap;
+                padding-bottom: 1rem;
+                margin-top: -1px;
+                text-align: center;
+                white-space: nowrap;
+            }
+
+            .btn-bd-primary {
+                --bd-violet-bg: #712cf9;
+                --bd-violet-rgb: 112.520718, 44.062154, 249.437846;
+                --bs-btn-font-weight: 600;
+                --bs-btn-color: var(--bs-white);
+                --bs-btn-bg: var(--bd-violet-bg);
+                --bs-btn-border-color: var(--bd-violet-bg);
+                --bs-btn-hover-color: var(--bs-white);
+                --bs-btn-hover-bg: #6528e0;
+                --bs-btn-hover-border-color: #6528e0;
+                --bs-btn-focus-shadow-rgb: var(--bd-violet-rgb);
+                --bs-btn-active-color: var(--bs-btn-hover-color);
+                --bs-btn-active-bg: #5a23c8;
+                --bs-btn-active-border-color: #5a23c8;
+            }
+
+            .bd-mode-toggle {
+                z-index: 1500;
+            }
+
+            .hidden {
+                display: none !important;
+            }
+
+            .row {
+                padding-bottom: 10px;
+            }
+        </style>
+    </head>
+    <body>
+        <header style="height:80px!important;" class="navbar position-sticky navbar-light sticky-top bg-body-tertiary bg-light flex-md-nowrap p-0 shadow container-menu">
+            <a href="http://localhost:58290/index.html">
+                <img src="./MRE-PRIVILEGIOS-PERU_files-dashboard/logo.png">
+            </a>
+            <button class="navbar-toggler position-absolute d-md-none collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="titulo" style="margin-right:30px;"> Módulo de Cambio de Calidad Migratoria para Extranjeros en el Perú </div>
+        </header>
+        <div class="container-fluid">
+            <div class="row">
+                <main>
+                    <input type="hidden" value="http://localhost:2022/v1/mre/pes/procesos/privilegios/" id="hidAPI">
+                    <input type="hidden" value="http://localhost:58288/" id="hidWEB">
+                    <script>
+                        const basePath = {
+                            privilegiosApi: document.querySelector("#hidAPI").value,
+                            privilegiosWeb: document.querySelector("#hidWEB").value
+                        }
+                    </script>
+                    <style>
+                        .container-fluid {
+                            width: 100% !important;
+                        }
+
+                        .container {
+                            width: 100% !important;
+                        }
+
+                        .row-child {
+                            padding-top: 5px;
+                            padding-left: 20px;
+                            padding-bottom: 3px;
+                        }
+                    </style>
+                    <script src="./MRE-PRIVILEGIOS-PERU_files-dashboard/api.js.descarga"></script>
+                    <script src="./MRE-PRIVILEGIOS-PERU_files-dashboard/service.carnetidentidad.js.descarga"></script>
+                    <script src="./MRE-PRIVILEGIOS-PERU_files-dashboard/consulta.js.descarga"></script>
+                    <div class="container">
+                        <br>
+                        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                            <h2 class="h2 tit"> Formulario de Pre Registro </h2>
+                            <div class="btn-toolbar mb-2 mb-md-0">
+                                <button class="navbar-toggler position-absolute d-md-none collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation">
+                                    <span class="navbar-toggler-icon"></span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="modal-body mt-1 mb-2 me-5 ms-5">
+                            <div class="row mt-2 mb-3 pt-3 alert alert-secondary rounded-0">
+                                <div class="col-md-10 text-center">
+                                    <div class="row text-muted">
+                                        <div class="col-md-12">
+                                            <h2 class="h4 title">Formulario DGC-005 </h2>
+                                        </div>
+                                        <div class="col-md-12">
+                                            <p class="h5 title">Solicitud de Visa</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="row text-start">
+                                        <div class="col-md-12">
+                                            <label for="dllTipoDocumento" class="form-label">N° de Expediente <label class="lblrequerido"></label> : </label>
+                                            <input type="text" class="form-control form-control-sm fs-5 text-center border border-dark" id="txtNombresAcreditacion" disabled value="EX0009012024">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-3">
+                                    <label for="dllTipoDocumento" class="form-label">Fecha <label class="lblrequerido"></label> : </label>
+                                    <input type="text" class="form-control  form-control-sm" id="txtNombresAcreditacion" value="23/01/2024" disabled>
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="dllTipoDocumento" class="form-label">Estado <label class="lblrequerido"></label> : </label>
+                                    <input type="text" class="form-control  form-control-sm" id="txtNombresAcreditacion" value="SOLICITADO" disabled>
+                                </div>
+                            </div>
+                            <!-- 1. Procedimiento a realizar -->
+                            <div class="row mb-3 text-center">
+                                <div class="d-flex justify-content-between mb-3 subtituloscat">
+                                    <h5>1. Procedimiento a realizar</h5>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="row text-start">
+                                            <div class="col-md-2">
+                                                <label for="dllTipoDocumento" class="form-label">Tipo de Permanencia <label class="lblrequerido"> (*)</label> : </label>
+                                                <select class="form-select form-select-sm" id="dllTipoDocumento">
+                                                    <option value="0">Seleccione</option>
+                                                    <option value="9" selected>RESIDENTE</option>
+                                                    <option value="10">TEMPORAL</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-2">
+                                                <label for="txtApellidoPaternoAcreditacion" class="form-label">Código de Visa : </label>
+                                                <input type="text" class="form-control  form-control-sm" id="txtApellidoPaternoAcreditacion" value="CIR" disabled>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label for="txtNumeroDocumento" class="form-label">Nombre de Visa <label class="lblrequerido"> (*)</label> : </label>
+                                                <div class="input-group">
+                                                    <select id="dllCategoria" class="form-select form-select-sm">
+                                                        <option value="">-Seleccione-</option>
+                                                        <option value="COR,|E-#">COR - Consular</option>
+                                                        <option value="CIT,03|-#">CIT - Convenios internacionales</option>
+                                                        <option value="CIA,|-#">CIA - Convenios Internacionales-Asilado</option>
+                                                        <option value="CIR,|-#" selected>CIR - Convenios Internacionales-Refugiado</option>
+                                                        <option value="DIR,|E-#">DIR - Diplomática</option>
+                                                        <option value="FO,03|E-#">FO - Familiar oficial</option>
+                                                        <option value="OFR,|E-#">OFR - Oficial</option>
+                                                        <option value="PTR,03|-#">PTR - Periodista</option>
+                                                        <option value="PAR,|-#">PAR - Producción Artística</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-2 ">
+                                                <input type="hidden" id="hidPersona">
+                                                <label for="txtNombresAcreditacion" class="form-label">Titular/Familiar <label class="lblrequerido"> (*)</label> : </label>
+                                                <select id="dllStatus" class="form-select form-select-sm">
+                                                    <option value="">-Seleccione-</option>
+                                                    <option value="A" selected>Titular</option>
+                                                    <option value="B">Esposa(o)</option>
+                                                    <option value="C">Hijos</option>
+                                                    <option value="D">Padres</option>
+                                                    <option value="E">Dependientes</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-2">
+                                                <label for="txtApellidoPaternoAcreditacion" class="form-label">Tiempo de Perm.(Días) </label>
+                                                <input type="number" class="form-control  form-control-sm" id="txtApellidoPaternoAcreditacion" value="1">
+                                            </div>
+                                        </div>
+                                        <input id="hgenero" type="hidden" value="">
+                                    </div>
+                                </div>
+                            </div>
+                            <hr>
+                            <!-- 2. Datos del Solicitante -->
+                            <div class="row mb-3 text-center">
+                                <div class="d-flex justify-content-between mb-3 subtituloscat">
+                                    <h5>2. Datos del Solicitante</h5>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="row text-start">
+                                            <div class="col-md-3">
+                                                <label for="dllTipoDocumento" class="form-label">Tipo de Documento <label class="lblrequerido"> (*)</label> : </label>
+                                                <select class="form-select form-select-sm" id="dllTipoDocumento">
+                                                    <option value="0">Seleccione</option>
+                                                    <option value="PAS" selected>Pasaporte</option>
+                                                    <option value="SAL">Salvoconducto</option>
+                                                    <option value="DDV">Documento de Viaje</option>
+                                                    <option value="DNI">DNI- del país de origen</option>
+                                                    <option value="PAR">Partida de Nacimiento Venezolano</option>
+                                                    <option value="OTR">Otros</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label for="txtNumeroDocumento" class="form-label">Número de Documento <label class="lblrequerido"> (*)</label> : </label>
+                                                <div class="input-group">
+                                                    <input type="text" class="form-control  form-control-sm" id="txtNumeroDocumento" aria-describedby="btnBuscarPersona" value="ZA8000221">
+                                                    <button class="btn btn-outline-secondary btn-sm" title="Buscar persona" type="button" id="btnBuscarPersona">
+                                                        <i class="bi bi-search"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label for="dllTipoDocumento" class="form-label">Tipo de Pasaporte <label class="lblrequerido"> (*)</label> : </label>
+                                                <select class="form-select form-select-sm" id="dllTipoDocumento">
+                                                    <option value="">Ninguno</option>
+                                                    <option value="C" selected>Común</option>
+                                                    <option value="D">Diplomático</option>
+                                                    <option value="S">Laissez Passer</option>
+                                                    <option value="F">Oficiales</option>
+                                                    <option value="O">Otro</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label for="txtNumeroDocumento" class="form-label">Número de Pasaporte <label class="lblrequerido"> (*)</label> : </label>
+                                                <div class="input-group">
+                                                    <input type="text" class="form-control  form-control-sm" id="txtNumeroDocumento" aria-describedby="btnBuscarPersona" value="ZA8000221">
+                                                    <button class="btn btn-outline-secondary btn-sm" title="Buscar persona" type="button" id="btnBuscarPersona">
+                                                        <i class="bi bi-search"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row text-start">
+                                            <div class="col-md-4">
+                                                <label for="txtApellidoPaternoAcreditacion" class="form-label">Primer Apellido: <label class="lblrequerido"> (*)</label> : </label>
+                                                <input type="text" class="form-control  form-control-sm" id="txtApellidoPaternoAcreditacion" value="OLIVERA">
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label for="txtApellidoMaternoAcreditacion" class="form-label">Segundo Apellido: <label class="lblrequerido"> (*)</label> : </label>
+                                                <input type="text" class="form-control  form-control-sm" id="txtApellidoMaternoAcreditacion" value="TERAN">
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label for="txtApellidoMaternoAcreditacion" class="form-label">Nombres: <label class="lblrequerido"> (*)</label> : </label>
+                                                <input type="text" class="form-control  form-control-sm" id="txtApellidoMaternoAcreditacion" value="YASNIMAR ANDREINA">
+                                            </div>
+                                        </div>
+                                        <div class="row text-start">
+                                            <div class="col-md-4">
+                                                <label for="txtApellidoPaternoAcreditacion" class="form-label">Sexo: </label>
+                                                <select class="form-select form-select-sm" id="dllTipoDocumento">
+                                                    <option value="M">MASCULINO</option>
+                                                    <option value="F" selected>FEMENINO</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label for="txtApellidoPaternoAcreditacion" class="form-label">Estado Civil: </label>
+                                                <select class="form-select form-select-sm" id="dllTipoDocumento">
+                                                    <option value="C">CASADO(A)</option>
+                                                    <option value="D">DIVORCIADO</option>
+                                                    <option value="S" selected>SOLTERO(A)</option>
+                                                    <option value="V">VIUDO</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label for="txtApellidoMaternoAcreditacion" class="form-label">Lugar de Nacimiento: </label>
+                                                <select class="form-select form-select-sm" id="dllTipoDocumento">
+                                                    <option value="">-Seleccione-</option>
+                                                    <option value="AFG">AFGANISTÁN</option>
+                                                    <option value="ALB">ALBANIA</option>
+                                                    <option value="RFA">ALEMANIA</option>
+                                                    <option value="URU">URUGUAY</option>
+                                                    <option value="UZB">UZBEKISTÁN</option>
+                                                    <option value="VAN">VANUATU</option>
+                                                    <option value="VEN" selected>VENEZUELA</option>
+                                                    <option value="VIE">VIETNAM</option>
+                                                    <option value="YRA">YEMEN</option>
+                                                    <option value="DJI">YIBUTI</option>
+                                                    <option value="ZAM">ZAMBIA</option>
+                                                    <option value="ZIM">ZIMBABWE</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="row text-start">
+                                            <div class="col-md-4">
+                                                <label for="txtApellidoPaternoAcreditacion" class="form-label">Nacionalidad: </label>
+                                                <select class="form-select form-select-sm" id="dllTipoDocumento">
+                                                    <option value="">-Seleccione-</option>
+                                                    <option value="AFG">AFGANO/NA</option>
+                                                    <option value="ALB">ALBANÉS/SA</option>
+                                                    <option value="RFA">ALEMÁN/NA</option>
+                                                    <option value="AND">ANDORRANO/NA</option>
+                                                    <option value="URU">URUGUAYO/YA</option>
+                                                    <option value="UZB">UZBEKO/KA</option>
+                                                    <option value="VAN">VANUATUENSE</option>
+                                                    <option value="VAT">VATICANO/NA</option>
+                                                    <option value="VEN" selected>VENEZOLANO/NA</option>
+                                                    <option value="VIE">VIETNAMITA</option>
+                                                    <option value="YRA">YEMENÍ</option>
+                                                    <option value="DJI">YIBUTIANO/NA</option>
+                                                    <option value="ZAM">ZAMBIANO/NA</option>
+                                                    <option value="ZIM">ZIMBABUENSE</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label for="txtApellidoPaternoAcreditacion" class="form-label">Fecha de Nacimiento (dd/mm/aaaa): </label>
+                                                <input type="text" class="form-control  form-control-sm" id="txtNombresAcreditacion" value="19/04/2008">
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label for="txtApellidoMaternoAcreditacion" class="form-label">Profesión/Ocupación: </label>
+                                                <select class="form-select form-select-sm" id="dllTipoDocumento" disabled>
+                                                    <option value="">-Seleccione-</option>
+                                                    <option value="003">ABOGADO</option>
+                                                    <option value="011">ADM.EMPRESA</option>
+                                                    <option value="908">AGENTE DE VIAJE</option>
+                                                    <option value="105">AGRICULTOR</option>
+                                                    <option value="201">EJERCITO PERUANO</option>
+                                                    <option value="312">EJERCITO PERUANO (R)</option>
+                                                    <option value="606">ELECTRICISTA</option>
+                                                    <option value="500" selected>EMPLEADO</option>
+                                                    <option value="104">EMPRESARIO</option>
+                                                    <option value="018">ENFERMERA</option>
+                                                    <option value="909">VETERINARIO</option>
+                                                    <option value="301">VISITADOR MEDICO</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <hr>
+                                        <div class="d-flex justify-content-between mb-3 subtituloscat bg bg-secondary">
+                                            <h5>2.1. Datos del Domicilio en Perú</h5>
+                                        </div>
+                                        <div class="row text-start">
+                                            <div class="col-md-3">
+                                                <label for="txtApellidoPaternoAcreditacion" class="form-label">Departamento: </label>
+                                                <select class="form-select form-select-sm" id="dllTipoDocumento">
+                                                    <option value="01">AMAZONAS</option>                          
+                                                    <option value="14">LAMBAYEQUE</option>
+                                                    <option value="15" selected>LIMA</option>
+                                                    <option value="16">LORETO</option>
+                                                    <option value="24">TUMBES</option>                                     
+                                                </select>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label for="txtApellidoPaternoAcreditacion" class="form-label">Provincia: </label>
+                                                <select class="form-select form-select-sm" id="dllTipoDocumento">
+                                                    <option value="1501" selected>LIMA</option>
+                                                    <option value="1502">BARRANCA</option>
+                                                    <option value="1503">CAJATAMBO</option>
+                                                    <option value="1504">CANTA</option>
+                                                    <option value="1505">CAÑETE</option>
+                                                    <option value="1506">HUARAL</option>
+                                                    <option value="1507">HUAROCHIRI</option>
+                                                    <option value="1508">HUAURA</option>
+                                                    <option value="1509">OYON</option>
+                                                    <option value="1510">YAUYOS</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label for="txtApellidoPaternoAcreditacion" class="form-label">Distrito: </label>
+                                                <select class="form-select form-select-sm" id="dllTipoDocumento">
+                                                    <option value="01">LIMA</option>                    
+                                                    <option value="15">LA VICTORIA</option>
+                                                    <option value="16" selected>LINCE</option>
+                                                    <option value="17">LOS OLIVOS</option>
+                                                    <option value="18">LURIGANCHO</option>                                   
+                                                    <option value="44">SANTA MARIA DE HUACHIPA</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label for="txtApellidoPaternoAcreditacion" class="form-label">Av./Jr./Calle: </label>
+                                                <select class="form-select form-select-sm" id="dllTipoDocumento">
+                                                    <option value="1501">JIRÓN</option>
+                                                    <option value="1502" selected>AVENIDA</option>
+                                                    <option value="1503">CALLE</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="row text-start">
+                                            <div class="col-md-6">
+                                                <label for="txtApellidoPaternoAcreditacion" class="form-label">Dirección del Domicilio/Alojamiento en Perú(Av. Jr. Calle): </label>
+                                                <input type="text" class="form-control  form-control-sm" id="txtFechaInicio" value="Avenida los ruiseñores 5526">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label for="txtApellidoPaternoAcreditacion" class="form-label">Referencias: </label>
+                                                <input type="text" class="form-control  form-control-sm" id="txtFechaInicio" value="Frente al Hospital Rebagliatti">
+                                            </div>
+                                        </div>
+                                        <div class="row text-start">
+                                            <div class="col-md-3">
+                                                <label class="form-label">Teléfono en Perú <label class="lblrequerido"> (*)</label> : </label>
+                                                <input type="number" class="form-control  form-control-sm" id="txtFechaInicio" value="985563214">
+                                            </div>
+                                            <div class="col-md-3 ">
+                                                <input type="hidden" id="hidPersona">
+                                                <label for="txtNombresAcreditacion" class="form-label">Correo Electóronico <label class="lblrequerido"> (*)</label> : </label>
+                                                <input type="text" class="form-control  form-control-sm" id="txtNombresAcreditacion" value="yandreina@gmail.com" placeholder="micorreo@mail.com">
+                                            </div>
+                                        </div>
+                                        <div class="d-flex justify-content-between mb-3 subtituloscat bg bg-secondary">
+                                            <h5>2.2. Datos del Domicilio en el Extranjero</h5>
+                                        </div>
+                                        <div class="row text-start">
+                                            <div class="col-md-3">
+                                                <label for="dllTipoDocumento" class="form-label">País <label class="lblrequerido"> (*)</label> : </label>
+                                                <select class="form-select form-select-sm" id="dllTipoDocumento">
+                                                    <option value="">-Seleccione-</option>
+                                                    <option value="AFG">AFGANISTÁN</option>
+                                                    <option value="AGI">AGUAS INTERNACIONALE</option>
+                                                    <option value="ALB">ALBANIA</option>
+                                                    <option value="RFA">ALEMANIA</option>
+                                                    <option value="VEN" selected>VENEZUELA</option>
+                                                    <option value="VIE">VIETNAM</option>
+                                                    <option value="YRA">YEMEN</option>
+                                                    <option value="DJI">YIBUTI</option>
+                                                    <option value="ZAM">ZAMBIA</option>
+                                                    <option value="ZIM">ZIMBABWE</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">Dirección del Domicilio en el extranjero: <label class="lblrequerido"> (*)</label> : </label>
+                                                <input type="text" class="form-control  form-control-sm" id="txtFechaInicio" value="LA CAÑADA DEL DIABLO, CALLE PRNCIPAL N° 134, DISTRITO ARAGUA - SUR  ">
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label class="form-label">Teléfono: <label class="lblrequerido"> (*)</label> : </label>
+                                                <input type="number" class="form-control  form-control-sm" id="txtFechaInicio" value="5878236212">
+                                            </div>
+                                        </div>
+                                        <hr>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary m-1" data-bs-dismiss="modal">Cancelar</button>
+                                <button type="button" class="btn btn-primary m-1" onclick="mensaje();">Guardar</button>
+                            </div>
+                        </div>
+                    </div>
+                    <script>
+                        $(function() {
+                            $("#btnBuscar").click(function() {
+                                grecaptcha.ready(function() {
+                                    grecaptcha.execute("6LcsW1QnAAAAAKqGcFVLrUHq7gPrB9C5LLnDFfuf", {
+                                        action: 'queryci'
+                                    }).then(function(token) {
+                                        buscarCarnetIdentidad(token);
+                                    });
+                                });
+                            });
+                        });
+                    </script>
+                </main>
+            </div>
+        </div>
+        <div class="container-center" style="display:none;" id="loading">
+            <div class="mx-auto" style="width: 200px;">
+                <div class="content-center">
+                    <div class="spinner-border text-danger" role="status" style="width: 3rem; height: 3rem;">
+                        <span class="sr-only"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <footer class="border-top footer text-muted">
+            <div class="container-fluid text-end"> © 2024 - VISAS - MINISTERIO DE RELACIONES EXTERIORES </div>
+        </footer>
+    </body>
+</html>
