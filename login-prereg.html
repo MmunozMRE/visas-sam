@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<!-- saved from url=(0027)http://localhost:2050/login -->
+<html lang="en" data-bs-theme="light"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <link rel="SHORTCUT ICON" href="http://localhost:2050/images/app/favicon.ico">
+    
+    <meta http-equiv="”Content-Type”" content="”text/html;" charset="utf-8″">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MRE - PRIVILEGIOS PERU</title>
+    <script type="text/javascript" async="" src="./MRE-PRIVILEGIOS-PERU_files-login/recaptcha__es.js.descargar" crossorigin="anonymous" integrity="sha384-vbLqFu7+om48WEigzItlbJqbFqQTDS+MxA+j9vq/fJVOXrAVQdvjHI9V6ehJN9FF"></script><script src="./MRE-PRIVILEGIOS-PERU_files-login/core.js.descargar"></script>
+    <script src="./MRE-PRIVILEGIOS-PERU_files-login/md5.js.descargar"></script>
+
+    <link href="./MRE-PRIVILEGIOS-PERU_files-login/bootstrap.min.css" rel="stylesheet">
+    <script src="./MRE-PRIVILEGIOS-PERU_files-login/bootstrap.bundle.min.js.descargar"></script>
+
+    <link rel="stylesheet" href="./MRE-PRIVILEGIOS-PERU_files-login/site.css">
+    <link rel="stylesheet" href="./MRE-PRIVILEGIOS-PERU_files-login/dashboard.css">
+    <link rel="stylesheet" href="./MRE-PRIVILEGIOS-PERU_files-login/sidebars.css">
+    <link rel="stylesheet" href="./MRE-PRIVILEGIOS-PERU_files-login/loading.css">
+    <script src="./MRE-PRIVILEGIOS-PERU_files-login/jquery.min.js.descargar"></script>
+
+    <link href="./MRE-PRIVILEGIOS-PERU_files-login/bootstrap-icons.css" rel="stylesheet">
+    <script src="./MRE-PRIVILEGIOS-PERU_files-login/site.js.descargar"></script>
+
+    <link rel="stylesheet" type="text/css" href="./MRE-PRIVILEGIOS-PERU_files-login/datatables.min.css">
+    <script type="text/javascript" src="./MRE-PRIVILEGIOS-PERU_files-login/datatables.min.js.descargar"></script>
+
+    <link rel="stylesheet" type="text/css" href="./MRE-PRIVILEGIOS-PERU_files-login/responsive.bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="./MRE-PRIVILEGIOS-PERU_files-login/responsive.dataTables.min.css">
+    <link rel="stylesheet" type="text/css" href="./MRE-PRIVILEGIOS-PERU_files-login/responsive.bootstrap4.min.css">
+
+    <script type="text/javascript" src="./MRE-PRIVILEGIOS-PERU_files-login/responsive.bootstrap.min.js.descargar"></script>
+    <script type="text/javascript" src="./MRE-PRIVILEGIOS-PERU_files-login/dataTables.responsive.min.js.descargar"></script>
+    <script type="text/javascript" src="./MRE-PRIVILEGIOS-PERU_files-login/responsive.bootstrap4.min.js.descargar"></script>
+
+    <link rel="stylesheet" type="text/css" href="./MRE-PRIVILEGIOS-PERU_files-login/sweetalert2.min.css">
+    <script type="text/javascript" src="./MRE-PRIVILEGIOS-PERU_files-login/sweetalert2.min.js.descargar"></script>
+
+
+    <script type="text/javascript" src="./MRE-PRIVILEGIOS-PERU_files-login/pdf.worker.js.descargar"></script>
+    <script type="text/javascript" src="./MRE-PRIVILEGIOS-PERU_files-login/pdf.js.descargar"></script>
+
+    <script src="./MRE-PRIVILEGIOS-PERU_files-login/security.js.descargar"></script>
+    <script src="./MRE-PRIVILEGIOS-PERU_files-login/general.js.descargar"></script>
+    <script src="./MRE-PRIVILEGIOS-PERU_files-login/service.passport.js.descargar"></script>
+    <style>
+        @font-face {
+            font-family: "Oswald";
+            src: url('css/fonts/Oswald/Oswald-VariableFont_wght.ttf');
+        }
+
+
+     /*   @font-face {
+            font-family: "Archivo";
+            src: url('../../css/fonts/Archivo/Archivo-VariableFont_wdth,wght.ttf'),url('../../css/fonts/Archivo/Archivo-Italic-VariableFont_wdth,wght.ttf');
+        }*/
+
+        body {
+            font-family: "Oswald","Archivo" !important;
+        }
+
+        .bd-placeholder-img {
+            font-size: 1.125rem;
+            text-anchor: middle;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            user-select: none;
+        }
+
+        @media (min-width: 768px) {
+            .bd-placeholder-img-lg {
+                font-size: 3.5rem;
+            }
+        }
+
+        .b-example-divider {
+            width: 100%;
+            height: 3rem;
+            background-color: rgba(0, 0, 0, .1);
+            border: solid rgba(0, 0, 0, .15);
+            border-width: 1px 0;
+            box-shadow: inset 0 .5em 1.5em rgba(0, 0, 0, .1), inset 0 .125em .5em rgba(0, 0, 0, .15);
+        }
+
+        .b-example-vr {
+            flex-shrink: 0;
+            width: 1.5rem;
+            height: 100vh;
+        }
+
+        .bi {
+            vertical-align: -.125em;
+            fill: currentColor;
+        }
+
+        .nav-scroller {
+            position: relative;
+            z-index: 2;
+        }
+
+            .nav-scroller .nav {
+                display: flex;
+                flex-wrap: nowrap;
+                padding-bottom: 1rem;
+                margin-top: -1px;
+                text-align: center;
+                white-space: nowrap;
+            }
+
+        .btn-bd-primary {
+            --bd-violet-bg: #712cf9;
+            --bd-violet-rgb: 112.520718, 44.062154, 249.437846;
+            --bs-btn-font-weight: 600;
+            --bs-btn-color: var(--bs-white);
+            --bs-btn-bg: var(--bd-violet-bg);
+            --bs-btn-border-color: var(--bd-violet-bg);
+            --bs-btn-hover-color: var(--bs-white);
+            --bs-btn-hover-bg: #6528e0;
+            --bs-btn-hover-border-color: #6528e0;
+            --bs-btn-focus-shadow-rgb: var(--bd-violet-rgb);
+            --bs-btn-active-color: var(--bs-btn-hover-color);
+            --bs-btn-active-bg: #5a23c8;
+            --bs-btn-active-border-color: #5a23c8;
+        }
+
+        .bd-mode-toggle {
+            z-index: 1500;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .row {
+            padding-bottom: 10px;
+        }
+    </style>
+
+
+</head>
+<body>
+
+    <header class="navbar position-sticky navbar-light sticky-top bg-body-tertiary bg-light flex-md-nowrap p-0 shadow container-menu hidden">
+        <a href="http://localhost:2050/index.html"><img src="./MRE-PRIVILEGIOS-PERU_files-login/logo.png"></a>
+        <button class="navbar-toggler position-absolute d-md-none collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="titulo">MÓDULO DE CAMBIO DE CALIDAD MIGRATORIA PARA EXTRANJEROS EN EL PERÚ</div>
+        <div class="navbar-nav">
+            <div class="nav-item text-nowrap">
+
+                <div class="dropdown pb-4">
+                    <a class="d-flex align-items-center text-user text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-building"></i> <span class="d-sm-inline mx-1" id="pnombrerol">-</span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-dark text-small shadow" aria-labelledby="dropdownUser1">
+                        <li><a class="dropdown-item" onclick="loggout();">Finalizar sesión <i class="bi bi-box-arrow-right"></i></a></li>
+                    </ul>
+                </div>
+            </div>
+
+        </div>
+
+
+    </header>
+
+    <div class="container-fluid">
+        <div class="row">
+            <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-body-tertiary sidebar collapse container-menu hidden">
+                <div class="position-sticky pt-3 sidebar-sticky">
+
+                    <div class="dropdown pb-4">
+                        <a class="d-flex align-items-center text-user text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-person-circle"></i> <span class="d-sm-inline mx-1" id="pnombreusuario">-</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-dark text-small shadow" aria-labelledby="dropdownUser1">
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li><a class="dropdown-item" onclick="loggout();">Finalizar sesión <i class="bi bi-box-arrow-right"></i></a></li>
+                        </ul>
+                    </div>
+
+                    <hr>
+                    <ul class="nav nav-pills flex-column mb-sm-auto mb-0 align-items-sm-start" id="menu">
+                        <li>
+                           
+                                <a href="http://localhost:2050/Index" class="nav-link px-0 align-middle">
+                                    <i class="fs-4 bi-inicio"></i> <span class="ms-1 d-sm-inline">INICIO</span>
+                                </a>
+                           
+
+                        </li>
+                        <li>
+                            <a>
+                                </a><a class="nav-link px-0 align-middle" href="http://localhost:2050/Gestion/solicitudes">
+                                    <i class="fs-4 bi-missolicitudes"></i> <span class="ms-1 d-sm-inline">MIS SOLICITUDES</span>
+                                </a>
+                            
+
+                        </li>
+                        <li>
+                            <a href="http://localhost:2050/login#submenu1" data-bs-toggle="collapse" class="nav-link px-0 align-middle dropdown-toggle">
+                                <i class="fs-4 bi-creditaciones"></i> <span class="ms-1 d-sm-inline">ACREDITACIONES</span>
+                            </a>
+                            <ul class="collapse   nav flex-column ms-1" id="submenu1" data-bs-parent="#menu">
+                                <li class="w-100">
+                                    <a class="nav-link px-0" href="http://localhost:2050/Solicitud/acretitular"> <span class=" -sm-inline">- TITULARES</span></a>
+                                </li>
+                                <li>
+                                    <a class="nav-link px-0" href="http://localhost:2050/Solicitud/acredependiente"> <span class="d-sm-inline">- DEPENDIENTES</span></a>
+                                </li>
+                                <li>
+                                    <a class="nav-link px-0" href="http://localhost:2050/Solicitud/acrefinalizar"> <span class="d-sm-inline">- FINALIZAR ACREDITACION</span></a>
+                                </li>
+                                <li>
+                                    <a class="nav-link px-0" href="http://localhost:2050/Solicitud/acreactualizar"> <span class="d-sm-inline">- ACTUALIZAR ACREDITACION</span></a>
+                                </li>
+                            </ul>
+                        </li>
+
+                        <li>
+                            <a href="http://localhost:2050/login#submenu2" data-bs-toggle="collapse" class="nav-link px-0 align-middle dropdown-toggle ">
+                                <i class="fs-4 bi-calidadmigratoria"></i> <span class="ms-1 d-sm-inline">CALIDAD MIGRATORIA</span>
+                            </a>
+                            <ul class="collapse   nav flex-column ms-1" id="submenu2" data-bs-parent="#menu">
+                                <li class="w-100">
+                                    <a class="nav-link px-0" href="http://localhost:2050/Solicitud/calminuevo"> <span class="d-sm-inline">- REGISTRAR</span></a>
+                                </li>
+                                <li>
+                                    <a class="nav-link px-0" href="http://localhost:2050/Solicitud/calmiprorroga"> <span class="d-sm-inline">- PRORROGAR</span></a>
+                                </li>
+                                <li>
+                                    <a class="nav-link px-0" href="http://localhost:2050/Solicitud/calmicambio"> <span class="d-sm-inline">- CAMBIAR</span></a>
+                                </li>
+                            </ul>
+                        </li>
+                        <li>
+                            <a href="http://localhost:2050/login#submenu3" data-bs-toggle="collapse" class="nav-link px-0 align-middle dropdown-toggle">
+                                <i class="fs-4 bi-identidad"></i> <span class="ms-1 d-sm-inline">CARNET DE INDENTIDAD</span>
+                            </a>
+                            <ul class="collapse   nav flex-column ms-1" id="submenu3" data-bs-parent="#menu">
+                                <li class="w-100">
+                                    <a class="nav-link px-0" href="http://localhost:2050/Solicitud/caridemision"> <span class="d-sm-inline">- EMISION</span></a>
+                                </li>
+                                <li>
+                                    <a class="nav-link px-0" href="http://localhost:2050/Solicitud/cariderenovacion"> <span class="d-sm-inline">- RENOVACION</span></a>
+                                </li>
+                                <li>
+                                    <a class="nav-link px-0" href="http://localhost:2050/Solicitud/carideduplicado"> <span class="d-sm-inline">- DUPLICADO</span></a>
+                                </li>
+
+                            </ul>
+                        </li>
+                        <li>
+                            <a href="http://localhost:2050/login#submenu4" data-bs-toggle="collapse" class="nav-link px-0 align-middle dropdown-toggle">
+                                <i class="fs-4 bi-importacion"></i> <span class="ms-1 d-sm-inline">VEHÍCULOS</span>
+                            </a>
+                            <ul class="collapse   nav flex-column ms-1" id="submenu4" data-bs-parent="#menu">
+                                <li class="w-100">
+                                    <a href="http://localhost:2050/Solicitud/vehiculos/importacion" class="nav-link px-0"><span class="d-sm-inline">- IMPORTACIÓN</span></a>
+                                </li>
+                                <li>
+                                    <a href="http://localhost:2050/Solicitud/vehiculos/admision" class="nav-link px-0"><span class="d-sm-inline">- ADMISIÓN</span></a>
+                                </li>
+
+                            </ul>
+                        </li>
+                    </ul>
+
+
+
+
+                </div>
+            </nav>
+            <main>
+
+                <input type="hidden" value="http://localhost:2022/v1/mre/pes/procesos/privilegios/" id="hidAPI">
+<input type="hidden" value="http://localhost:2050/" id="hidWEB">
+
+<script>
+
+    const basePath = {
+        privilegiosApi: document.querySelector("#hidAPI").value,
+        privilegiosWeb: document.querySelector("#hidWEB").value
+    }
+</script>
+
+<script src="./MRE-PRIVILEGIOS-PERU_files-login/passport.js.descargar"></script>
+<link rel="stylesheet" href="./MRE-PRIVILEGIOS-PERU_files-login/login.css">
+
+<style>
+    @font-face {
+        font-family: "Oswald";
+        src: url('css/fonts/Oswald/Oswald-VariableFont_wght.ttf');
+    }
+
+    body {
+        font-family: "Oswald","Archivo" !important;
+        overflow: hidden;
+
+    }
+</style>
+<script src="./MRE-PRIVILEGIOS-PERU_files-login/api.js.descargar"></script>
+<section class="vh-100">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-sm-6 px-0 d-none d-sm-block imagenlogin">
+                <img src="./MRE-PRIVILEGIOS-PERU_files-login/mrecentral.jpg" alt="Login image" class="w-100 vh-100" style="object-fit: cover; object-position: center;">
+            </div>
+            <div class="col-sm-6 login-campos">
+
+                <div class="px-5 ms-xl-4 logo-login">
+                    <a href="http://localhost:2050/index.html"><img src="./MRE-PRIVILEGIOS-PERU_files-login/logo.png"></a>
+                </div>
+
+                <div class="d-flex align-items-center h-custom-2 px-5 ms-xl-4 mt-5 pt-5 pt-xl-0 mt-xl-n5 login-box">
+
+                    <div style="width: 23rem;"><!--ex FORM-->
+
+                        <h3 class="mb-3 pb-3 titlogin2">
+                            Módulo de Cambio de Calidad Migratoria para Extranjeros en el Perú
+                        </h3>
+
+                        <div class="form-outline mb-4">
+                            <label class="form-label-login" for="userName">Usuario</label>
+                            <input type="text" id="userName" class="form-control form-control-lg">
+
+                        </div>
+
+                        <div class="form-outline mb-4">
+                            <label class="form-label-login" for="password">Contraseña</label>
+                            <input type="password" id="password" class="form-control form-control-lg">
+
+                        </div>
+
+                        <div class="pt-1 mb-4">
+                            <!--<button class="btn btn-info btn-lg btn-block btn-login" id="btnSubmit">Login</button>-->
+                            <a href="form-preregistro.html" class="btn btn-info btn-lg btn-block btn-login">Login</a>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+</section>
+
+ <script>
+    const _userLogin = passport.getInformationUser();
+    if (_userLogin != null) passport.removeJwtToken();
+
+    $(function () {
+        $("#btnSubmit").click(function () {
+            grecaptcha.ready(function () {
+                grecaptcha.execute("6LcsW1QnAAAAAKqGcFVLrUHq7gPrB9C5LLnDFfuf", { action: 'loginext' }).then(function (token) {
+                    loggin(token);
+                });
+            });
+        });
+    });
+ </script>
+
+            </main>
+
+        </div>
+    </div>
+
+
+
+    <div class="container-center" style="display:none;" id="loading">
+        <div class="mx-auto" style="width: 200px;">
+            <div class="content-center">
+                <div class="spinner-border text-danger" role="status" style="width: 3rem; height: 3rem;">
+                    <span class="sr-only"></span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <footer class="border-top footer text-muted">
+        <div class="container-fluid text-end">
+            © 2024 - VISAS - MINISTERIO DE RELACIONES EXTERIORES 
+        </div>
+    </footer>
+
+
+    
+
+
+<!-- Visual Studio Browser Link -->
+<script type="text/javascript" src="./MRE-PRIVILEGIOS-PERU_files-login/browserLink" async="async" id="__browserLink_initializationData" data-requestid="fa0539e5f4784329929eb4cb7ca1ed6b" data-requestmappingfromserver="false" data-connecturl="http://localhost:59767/d773836e1018433e9f635853daf16333/browserLink"></script>
+<!-- End Browser Link -->
+<script src="./MRE-PRIVILEGIOS-PERU_files-login/aspnetcore-browser-refresh.js.descargar"></script>
+
+<div><div class="grecaptcha-badge" data-style="bottomright" style="width: 256px; height: 60px; display: block; transition: right 0.3s ease 0s; position: fixed; bottom: 14px; right: -186px; box-shadow: gray 0px 0px 5px; border-radius: 2px; overflow: hidden;"><div class="grecaptcha-logo"><iframe title="reCAPTCHA" width="256" height="60" role="presentation" name="a-yttm9njrv4y7" frameborder="0" scrolling="no" sandbox="allow-forms allow-popups allow-same-origin allow-scripts allow-top-navigation allow-modals allow-popups-to-escape-sandbox allow-storage-access-by-user-activation" src="./MRE-PRIVILEGIOS-PERU_files-login/anchor.html"></iframe></div><div class="grecaptcha-error"></div><textarea id="g-recaptcha-response-100000" name="g-recaptcha-response" class="g-recaptcha-response" style="width: 250px; height: 40px; border: 1px solid rgb(193, 193, 193); margin: 10px 25px; padding: 0px; resize: none; display: none;"></textarea></div><iframe style="display: none;" src="./MRE-PRIVILEGIOS-PERU_files-login/saved_resource(1).html"></iframe></div></body></html>
+
+
+
